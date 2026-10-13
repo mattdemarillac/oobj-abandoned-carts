@@ -1,0 +1,57 @@
+/* WooCommerce → Abandoned carts. */
+
+.oobj-ac-intro {
+	max-width: 60em;
+}
+
+.oobj-ac-summary {
+	clear: both;
+	padding-top: 8px;
+	font-size: 14px;
+}
+
+.oobj-ac-items {
+	margin: 0;
+}
+
+.oobj-ac-items li {
+	margin: 0 0 2px;
+}
+
+.oobj-ac-muted {
+	color: #646970;
+}
+
+.oobj-ac-stage {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: #f0f0f1;
+	color: #50575e;
+	white-space: nowrap;
+}
+
+.oobj-ac-stage-checkout,
+.oobj-ac-stage-pending {
+	background: #f8dda7;
+	color: #94660c;
+}
+
+.oobj-ac-stage-failed,
+.oobj-ac-stage-cancelled {
+	background: #eba3a3;
+	color: #761919;
+}
+
+@media screen and (min-width: 783px) {
+
+	.oobj-ac .column-updated_at,
+	.oobj-ac .column-created_at,
+	.oobj-ac .column-total {
+		width: 10em;
+	}
+
+	.oobj-ac .column-stage {
+		width: 13em;
+	}
+}

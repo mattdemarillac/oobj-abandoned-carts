@@ -1,0 +1,31 @@
+{
+	"name": "mattdemarillac/oobj-abandoned-carts",
+	"description": "OOBJ Abandoned Carts: the WooCommerce carts from the last week that weren't completed.",
+	"type": "wordpress-plugin",
+	"license": "proprietary",
+	"require-dev": {
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+		"phpcompatibility/phpcompatibility-wp": "^2.1 || ^3.0",
+		"phpunit/phpunit": "^9.6",
+		"wp-coding-standards/wpcs": "^3.1",
+		"wp-phpunit/wp-phpunit": "~7.1.0",
+		"yoast/phpunit-polyfills": "^4.0"
+	},
+	"scripts": {
+		"test": "tests/bin/phpunit.sh",
+		"lint": "phpcs",
+		"lint:fix": "phpcbf; test $? -le 1"
+	},
+	"scripts-descriptions": {
+		"test": "PHPUnit tests, in the litespeed container of the local stack (args go to PHPUnit, e.g. -- --filter Tracker).",
+		"lint": "Check PHP against the WordPress Coding Standards (phpcs.xml.dist).",
+		"lint:fix": "Fix what phpcbf can fix automatically."
+	},
+	"config": {
+		"sort-packages": true,
+		"process-timeout": 0,
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}
