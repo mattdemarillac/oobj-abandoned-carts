@@ -42,3 +42,15 @@ Requires PHP 8.1+ and Composer. The tests need a WordPress install with WooComme
 - Modules implement `OOBJ_AC_Module` (`register()` adds their hooks). `OOBJ_AC_Plugin::boot()` creates them and wires their dependencies. `oobj_abandoned_carts( OOBJ_AC_Store::class )` returns a module.
 - `declare( strict_types=1 );` in every PHP file.
 - Every change comes with tests, and coverage stays at 100% (once it gets there: see the README's Status).
+
+## CI and releases
+
+`.github/workflows/release.yml` runs on every push to `main`:
+
+1. **lint:** `composer lint`.
+2. **test-php:** PHPUnit with coverage against WordPress and WooCommerce (installed by `tests/bin/ci-wordpress.sh`, versions in that script) and a MariaDB service, then the 100% line coverage check.
+3. **release**, only when both pass: checks that the header's `Version` and `OOBJ_ABANDONED_CARTS_VERSION` match, builds `oobj-abandoned-carts-v<Version>.zip` (the plugin folder with `assets/`, `inc/`, the plugin file, `uninstall.php` and `LICENSE`), and publishes it as release `v<Version>`, marked latest.
+
+Until `Version` changes, each push to `main` moves the `v<Version>` tag to the new commit and replaces the release's zip. **To release a new version, bump both `Version` in the plugin header and `OOBJ_ABANDONED_CARTS_VERSION`.**
+
+Sites update through **Dashboard → Updates** ([OOBJ_AC_Updates](../inc/class-oobj-ac-updates.php)): the header's `Update URI` names the repo. A private repo needs a fine-grained token with read access to its contents in the site's `wp-config.php`: `define( 'OOBJ_AC_GITHUB_TOKEN', '…' );` (or the theme's `OOB_GITHUB_TOKEN`, if it can read this repo too). Updates are off on a site whose environment type is `local`.

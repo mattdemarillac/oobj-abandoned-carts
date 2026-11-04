@@ -35,6 +35,7 @@ WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-
 
 1. Upload the plugin folder to `wp-content/plugins/` (or install the zip from **Plugins → Add New → Upload Plugin**).
 2. Activate it.
+3. If the plugin's GitHub repo is private, add a token that can read it to `wp-config.php`, so updates can be downloaded: `define( 'OOBJ_AC_GITHUB_TOKEN', '…' );` ([development](docs/DEVELOPMENT.md#ci-and-releases)).
 
 On activation the plugin creates its two tables (see [Data and privacy](#data-and-privacy)) and imports the carts WooCommerce still has in its sessions (the last 2 to 7 days), so the list isn't empty on day one. The daily clean-up (Action Scheduler, part of WooCommerce) is scheduled on the next admin page load.
 
@@ -132,14 +133,13 @@ Done:
 
 - The saved carts list, with the **Emailed** column.
 - "Email me my cart" on the cart and checkout pages, the email, and the link back.
-- PHPUnit tests (41), run against WordPress and WooCommerce.
+- PHPUnit tests (65) with 100% line coverage, run against WordPress and WooCommerce.
+- Updates from GitHub releases, through **Dashboard → Updates** ([development](docs/DEVELOPMENT.md#ci-and-releases)).
+- A CI build: lint, the tests with 100% coverage, then the release zip.
 - This documentation.
 
 Before 1.0:
 
-- **Test coverage to 100%.** At 653 of 678 lines: the rest is older code (activation, scheduling, a few tracker branches). `composer test:coverage` lists the lines.
-- **Updates from GitHub releases**, so new versions arrive through **Dashboard → Updates**.
-- **A CI build:** lint, the tests with 100% coverage, then a release zip.
 - **An accessibility check** of the form (axe, WCAG 2.2 AA) on the cart and checkout, on phone and desktop.
 - **The Turnstile widget's space:** with Cloudflare's test keys it leaves an empty gap in the form; check it with real keys.
 - **A link from the mini cart** to the form.

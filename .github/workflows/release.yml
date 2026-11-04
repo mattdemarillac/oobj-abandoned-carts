@@ -1,0 +1,200 @@
+name: Build and Release
+
+# Every push to main publishes the release for the Version in the plugin header, e.g. v0.2.0, with
+# oobj-abandoned-carts-v0.2.0.zip (what OOBJ_AC_Updates installs). Until Version changes, each push moves the v0.2.0
+# tag to the new commit and replaces that release's files; bump Version (and OOBJ_ABANDONED_CARTS_VERSION) to start
+# the next release. Pushing a v* tag yourself releases that tag (it must match Version). Manual runs only build and
+# keep the archive as a workflow artifact.
+#
+# The archive holds an oobj-abandoned-carts/ folder for wp-content/plugins/, with only the files the site runs and
+# the licence: tests, tooling and docs stay out.
+#
+# Nothing is released unless lint and the tests pass: PHPUnit with WordPress, WooCommerce and a MariaDB service,
+# and 100% line coverage.
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Actions are pinned to a commit (the tag in the comment), so a moved or hijacked tag can't change what runs with
+# write access to the repo.
+
+env:
+  PHP_VERSION: "8.5"
+  SLUG: oobj-abandoned-carts
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Lint PHP
+        run: composer lint
+
+  test-php:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    # The WordPress test suite drops and reinstalls its tables in this database on every run.
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: plugin_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=24
+
+    env:
+      WP_TESTS_DB_HOST: 127.0.0.1:3306
+      WP_TESTS_DB_NAME: plugin_tests
+      WP_TESTS_DB_USER: root
+      WP_TESTS_DB_PASSWORD: root
+
+    defaults:
+      run:
+        working-directory: wordpress/wp-content/plugins/oobj-abandoned-carts
+
+    steps:
+      # Where tests/wp-tests-config.php finds WordPress: the plugin's folder is wp-content/plugins/<folder>.
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: wordpress/wp-content/plugins/oobj-abandoned-carts
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli, intl, zip, gd, mbstring, bcmath, exif
+          coverage: pcov
+          ini-values: memory_limit=1G, pcov.directory=${{ github.workspace }}/wordpress/wp-content/plugins/oobj-abandoned-carts
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Install WordPress and WooCommerce
+        run: tests/bin/ci-wordpress.sh
+
+      - name: PHPUnit with coverage
+        run: vendor/bin/phpunit --coverage-text=php://stdout --coverage-clover tests/coverage/clover.xml
+
+      - name: PHP coverage is 100%
+        run: php tests/bin/coverage-check.php tests/coverage/clover.xml
+
+  release:
+    needs: [lint, test-php]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Work out the release from the plugin header
+        id: release
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^ \* Version: *//p' "${SLUG}.php" | tr -d '\r')"
+          constant="$(sed -n "s/^define( 'OOBJ_ABANDONED_CARTS_VERSION', '\(.*\)' );/\1/p" "${SLUG}.php")"
+          if [ -z "${version}" ]; then
+            echo "No Version: in ${SLUG}.php." >&2
+            exit 1
+          fi
+          if [ "${version}" != "${constant}" ]; then
+            echo "Version: ${version} and OOBJ_ABANDONED_CARTS_VERSION ${constant} differ." >&2
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} doesn't match Version: ${version}." >&2
+            exit 1
+          fi
+          publish=false
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] || { [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF_NAME}" = "main" ]; }; then
+            publish=true
+          fi
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "Release v${version} (publish: ${publish})"
+
+      - name: Copy the plugin's runtime files
+        run: |
+          set -euo pipefail
+          mkdir -p "build/${SLUG}"
+          cp -R assets inc "${SLUG}.php" uninstall.php LICENSE "build/${SLUG}/"
+          find "build/${SLUG}" -name '.DS_Store' -delete
+
+      - name: Check nothing else got in
+        run: |
+          set -euo pipefail
+          cd "build/${SLUG}"
+          bad="$(find . \( -name tests -o -name vendor -o -name node_modules -o -name docs -o -name '*.md' \
+            -o -name '*.dist' -o -name 'composer.*' -o -name '.*' ! -name '.' \) -print)"
+          if [ -n "$bad" ]; then
+            echo "Not for production:" >&2
+            echo "$bad" >&2
+            exit 1
+          fi
+          test -f LICENSE
+          find . -type f | sort
+
+      - name: Create the release archive
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (cd build && zip -qr "../dist/${SLUG}-${{ steps.release.outputs.tag }}.zip" "${SLUG}")
+          ls -l dist
+
+      # A push to main releases the current Version again: point its tag at this commit. Tags pushed with the
+      # workflow's own token don't start another run.
+      - name: Move the version tag to this commit
+        if: steps.release.outputs.publish == 'true' && github.ref_type != 'tag'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.release.outputs.tag }}"
+          git tag -f "${tag}" "${GITHUB_SHA}"
+          git push -f origin "refs/tags/${tag}"
+
+      - name: Publish the GitHub release
+        if: steps.release.outputs.publish == 'true'
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          overwrite_files: true
+          files: dist/*.zip
+
+      - name: Keep the archive (manual runs)
+        if: steps.release.outputs.publish != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ env.SLUG }}-${{ steps.release.outputs.tag }}
+          path: dist/
