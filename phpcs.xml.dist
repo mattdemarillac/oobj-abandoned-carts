@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="oobj-abandoned-carts">
-	<description>Coding standards for OOBJ Abandoned Carts: WordPress Coding Standards (WordPress-Extra) and PHP compatibility.</description>
+	<description>Coding standards for Saved Carts: WordPress Coding Standards (WordPress-Extra) and PHP compatibility.</description>
 
 	<file>.</file>
 	<exclude-pattern>/vendor/*</exclude-pattern>

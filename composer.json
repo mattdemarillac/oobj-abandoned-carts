@@ -1,6 +1,6 @@
 {
 	"name": "mattdemarillac/oobj-abandoned-carts",
-	"description": "OOBJ Abandoned Carts: the WooCommerce carts from the last week that weren't completed.",
+	"description": "Saved Carts for WooCommerce: every cart kept, the unfinished ones listed, and shoppers can email themselves their cart.",
 	"type": "wordpress-plugin",
 	"license": "proprietary",
 	"require-dev": {

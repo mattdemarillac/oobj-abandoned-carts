@@ -16,7 +16,7 @@ class OOBJ_AC_Stage {
 
 	/**
 	 * Order statuses (without `wc-`) that mean the shopper finished checking out: paid, or on hold (waiting
-	 * for the shop, e.g. a payment under review). Those carts aren't abandoned. Filter: oobj_ac_completed_statuses.
+	 * for the shop, e.g. a payment under review). Those carts are finished. Filter: oobj_ac_completed_statuses.
 	 *
 	 * @return string[]
 	 */

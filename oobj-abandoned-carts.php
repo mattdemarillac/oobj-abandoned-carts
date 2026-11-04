@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name:       OOBJ Abandoned Carts
- * Description:       Lists the carts shoppers filled in the last week (or another period) that didn't become a paid order, under WooCommerce → Abandoned carts. WooCommerce forgets carts after two days, so the plugin keeps its own record of each cart as it changes.
+ * Plugin Name:       Saved Carts
+ * Description:       Keeps every cart shoppers fill, so you can see the ones that didn't become an order (WooCommerce → Saved carts), and lets shoppers email themselves their cart to come back to on any device.
  * Version:           0.1.0
  * Requires at least: 6.6
  * Requires PHP:      8.1

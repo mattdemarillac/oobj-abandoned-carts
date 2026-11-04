@@ -1,8 +1,8 @@
-# Abandoned Carts for WooCommerce
+# Saved Carts for WooCommerce
 
 Two things for a WooCommerce store:
 
-1. **A list of abandoned carts** under **WooCommerce → Abandoned carts**: the carts shoppers filled that didn't become a completed order, with who they were (once checkout knows), what was in the cart, how far they got, and whether they emailed the cart to themselves.
+1. **A list of unfinished carts** under **WooCommerce → Saved carts**: the carts shoppers filled that didn't become a completed order, with who they were (once checkout knows), what was in the cart, how far they got, and whether they emailed the cart to themselves.
 2. **"Email me my cart"** for shoppers: under the cart (and, collapsed, under the checkout) a shopper enters their email address and gets their cart by email, with a link that puts it back on any device.
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
@@ -13,7 +13,7 @@ WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-
 
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [The abandoned carts list](#the-abandoned-carts-list)
+- [The saved carts list](#the-saved-carts-list)
 - [Email me my cart](#email-me-my-cart)
 - [Configuration](#configuration)
 - [Data and privacy](#data-and-privacy)
@@ -40,9 +40,9 @@ On activation the plugin creates its two tables (see [Data and privacy](#data-an
 
 After an update, the tables are upgraded on the next page load when their version changes. There's no separate migration to run.
 
-## The abandoned carts list
+## The saved carts list
 
-**WooCommerce → Abandoned carts** (shop managers and administrators: the `manage_woocommerce` capability).
+**WooCommerce → Saved carts** (shop managers and administrators: the `manage_woocommerce` capability).
 
 - **Period:** the last 24 hours, 3, 7 (default), 14 or 30 days, by last activity. Totals for the period are at the top.
 - **Listed:** carts that didn't become a completed order. "Completed" means the order is paid, on hold or refunded ([filter](docs/REFERENCE.md#filters)).
@@ -130,7 +130,7 @@ Use and modification are permitted; redistribution isn't. See [LICENSE](LICENSE)
 
 Done:
 
-- The abandoned carts list, with the **Emailed** column.
+- The saved carts list, with the **Emailed** column.
 - "Email me my cart" on the cart and checkout pages, the email, and the link back.
 - PHPUnit tests (41), run against WordPress and WooCommerce.
 - This documentation.

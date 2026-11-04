@@ -59,7 +59,7 @@ class LifecycleTest extends OOBJ_AC_TestCase {
 
 		ob_start();
 		$table->no_items();
-		$this->assertSame( 'No abandoned carts in this period.', ob_get_clean() );
+		$this->assertSame( 'No unfinished carts in this period.', ob_get_clean() );
 
 		$this->assertSame( '', $table->column_default( array(), 'items' ), 'Only the date columns' );
 		$this->assertStringContainsString(

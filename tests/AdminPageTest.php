@@ -1,6 +1,6 @@
 <?php
 /**
- * The WooCommerce → Abandoned carts page.
+ * The WooCommerce → Saved carts page.
  *
  * @package oobj-abandoned-carts
  */
@@ -25,7 +25,7 @@ class AdminPageTest extends OOBJ_AC_TestCase {
 		return (string) ob_get_clean();
 	}
 
-	public function test_lists_the_weeks_abandoned_carts() {
+	public function test_lists_the_weeks_unfinished_carts() {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'shop_manager' ) ) );
 		$product = $this->create_product( 'Titanium Hoop' );
 		$this->insert_cart(
@@ -58,7 +58,7 @@ class AdminPageTest extends OOBJ_AC_TestCase {
 		$this->assertStringContainsString( 'Payment failed', $html );
 		$this->assertStringContainsString( 'Order #' . $failed->get_order_number(), $html );
 		$this->assertStringNotContainsString( 'old@example.org', $html );
-		$this->assertMatchesRegularExpression( '/<strong>2<\/strong> abandoned carts worth/', $html );
+		$this->assertMatchesRegularExpression( '/<strong>2<\/strong> unfinished carts worth/', $html );
 	}
 
 	public function test_the_period_comes_from_the_query_but_only_from_the_offered_periods() {

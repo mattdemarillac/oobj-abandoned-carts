@@ -19,7 +19,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 // phpcs:enable Squiz.Commenting.InlineComment.InvalidEndChar
 
 /**
- * The abandoned carts on the admin page, a page of 50 at a time.
+ * The unfinished carts on the admin page, a page of 50 at a time.
  */
 class OOBJ_AC_List_Table extends WP_List_Table {
 
@@ -107,7 +107,7 @@ class OOBJ_AC_List_Table extends WP_List_Table {
 	}
 
 	public function no_items() {
-		esc_html_e( 'No abandoned carts in this period.', 'oobj-abandoned-carts' );
+		esc_html_e( 'No unfinished carts in this period.', 'oobj-abandoned-carts' );
 	}
 
 	/**

@@ -10,7 +10,7 @@ declare( strict_types=1 );
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WooCommerce → Abandoned carts: the carts from the chosen period (a week by default) that weren't completed.
+ * WooCommerce → Saved carts: the carts from the chosen period (a week by default) that weren't completed.
  */
 class OOBJ_AC_Admin_Page implements OOBJ_AC_Module {
 
@@ -42,8 +42,8 @@ class OOBJ_AC_Admin_Page implements OOBJ_AC_Module {
 	public function add_menu(): void {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Abandoned carts', 'oobj-abandoned-carts' ),
-			__( 'Abandoned carts', 'oobj-abandoned-carts' ),
+			__( 'Saved carts', 'oobj-abandoned-carts' ),
+			__( 'Saved carts', 'oobj-abandoned-carts' ),
 			'manage_woocommerce',
 			self::SLUG,
 			array( $this, 'render' )
@@ -89,10 +89,10 @@ class OOBJ_AC_Admin_Page implements OOBJ_AC_Module {
 		$table->prepare_items();
 		?>
 		<div class="wrap oobj-ac">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Abandoned carts', 'oobj-abandoned-carts' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Saved carts', 'oobj-abandoned-carts' ); ?></h1>
 			<p class="oobj-ac-intro">
 				<?php
-				esc_html_e( 'Carts with items in them that didn\'t become a paid (or on-hold) order. Each cart is listed by its last activity. Carts emptied by the shopper aren\'t listed.', 'oobj-abandoned-carts' );
+				esc_html_e( 'Carts shoppers filled that haven\'t become a paid (or on-hold) order yet, by their last activity. Carts emptied by the shopper aren\'t listed.', 'oobj-abandoned-carts' );
 				?>
 			</p>
 
@@ -114,7 +114,7 @@ class OOBJ_AC_Admin_Page implements OOBJ_AC_Module {
 				echo wp_kses_post(
 					sprintf(
 						/* translators: 1: number of carts, 2: their combined value. */
-						_n( '<strong>%1$s</strong> abandoned cart worth <strong>%2$s</strong>', '<strong>%1$s</strong> abandoned carts worth <strong>%2$s</strong>', $table->total_carts(), 'oobj-abandoned-carts' ),
+						_n( '<strong>%1$s</strong> unfinished cart worth <strong>%2$s</strong>', '<strong>%1$s</strong> unfinished carts worth <strong>%2$s</strong>', $table->total_carts(), 'oobj-abandoned-carts' ),
 						number_format_i18n( $table->total_carts() ),
 						wc_price( $table->total_value() )
 					)

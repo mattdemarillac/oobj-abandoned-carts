@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * Against misuse (it sends email from the store's domain): it needs a cart in the shopper's session, a
  * hidden field bots fill in, Cloudflare Turnstile when Simple Cloudflare Turnstile has keys, and at most
  * MAX_PER_EMAIL emails to an address a day and MAX_PER_IP per IP an hour. The address is used only to send
- * the cart; the cart's record (WooCommerce → Abandoned carts) gets it if it had none.
+ * the cart; the cart's record (WooCommerce → Saved carts) gets it if it had none.
  */
 class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 

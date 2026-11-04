@@ -49,7 +49,7 @@ Default: WooCommerce's paid statuses (`wc_get_is_paid_statuses()`: processing an
 | `template_redirect` | Restores an emailed cart on the cart page (`?saved-cart=`). |
 | `rest_api_init` | Registers the REST route. |
 | `wp_enqueue_scripts` | Loads the form's script and styles on the cart and checkout pages only. |
-| `admin_menu`, `admin_enqueue_scripts` | The **Abandoned carts** page and its styles. |
+| `admin_menu`, `admin_enqueue_scripts` | The **Saved carts** page and its styles. |
 | `oobj_ac_prune` (Action Scheduler, daily) | Deletes carts past the retention period and emailed carts whose links have expired. |
 
 ## REST route
@@ -157,7 +157,7 @@ The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted
 | `inc/class-oobj-ac-backfill.php` | Imports WooCommerce's sessions on activation. |
 | `inc/class-oobj-ac-cleanup.php` | The daily clean-up and the retention period. |
 | `inc/class-oobj-ac-stage.php` | How far a cart got, and which order statuses count as completed. |
-| `inc/class-oobj-ac-admin-page.php`, `inc/class-oobj-ac-list-table.php` | The **Abandoned carts** page. |
+| `inc/class-oobj-ac-admin-page.php`, `inc/class-oobj-ac-list-table.php` | The **Saved carts** page. |
 | `inc/class-oobj-ac-saved-carts.php` | "Email me my cart": the form, the REST route, the email and the restore link. |
 | `assets/save-cart.js`, `assets/save-cart.css` | The form's script and styles. |
 | `uninstall.php` | Drops the tables when the plugin is deleted. |
