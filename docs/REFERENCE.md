@@ -46,6 +46,14 @@ add_filter( 'oobj_ac_bot_check', fn() => new My_Recaptcha_Check() ); // Your own
 add_filter( 'oobj_ac_bot_check', '__return_null' );                 // None.
 ```
 
+### `oobj_ac_ga4`
+
+Whether the Google Analytics 4 adapter's script (`assets/adapters/ga4.js`) loads with the form. Default `true`. The script sends `save_cart` only on pages that have `gtag()`.
+
+```php
+add_filter( 'oobj_ac_ga4', '__return_false' );
+```
+
 ## Bot checks
 
 A bot check is an adapter: a PHP class for the server and a script for the browser.
@@ -67,7 +75,7 @@ A bot check is an adapter: a PHP class for the server and a script for the brows
 | `token()` | The answer to send, or `''`. Sent as the REST parameter `bot_check`. |
 | `reset()` | After each try, so the next one gets a fresh answer. |
 
-The built-in **Cloudflare Turnstile** (`OOBJ_AC_Turnstile`, `assets/bot-check-turnstile.js`) is an example: it's ready when the options `cfturnstile_key` and `cfturnstile_secret` (from Simple Cloudflare Turnstile) are both set, and verifies with `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
+The built-in **Cloudflare Turnstile** (`inc/adapters/class-oobj-ac-turnstile.php`, `assets/adapters/turnstile.js`) is an example: it's ready when the options `cfturnstile_key` and `cfturnstile_secret` (from Simple Cloudflare Turnstile) are both set, and verifies with `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
 
 ## Browser events
 
@@ -92,7 +100,7 @@ document.addEventListener( 'oobj-ac:saved', () => { /* … */ } );
 | `render_block_woocommerce/checkout` | Adds the collapsed form after the Checkout block. |
 | `template_redirect` | Restores an emailed cart on the cart page (`?saved-cart=`). |
 | `rest_api_init` | Registers the REST route. |
-| `wp_enqueue_scripts` | Loads the form's script and styles, and the bot check's script, on the cart and checkout pages only. |
+| `wp_enqueue_scripts` | Loads the form's script and styles, the bot check's script and the GA4 adapter's, on the cart and checkout pages only. |
 | `admin_menu`, `admin_enqueue_scripts` | The **Saved carts** page and its styles. |
 | `oobj_ac_prune` (Action Scheduler, daily) | Deletes carts past the retention period and emailed carts whose links have expired. |
 
@@ -203,8 +211,9 @@ The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted
 | `inc/class-oobj-ac-stage.php` | How far a cart got, and which order statuses count as completed. |
 | `inc/class-oobj-ac-admin-page.php`, `inc/class-oobj-ac-list-table.php` | The **Saved carts** page. |
 | `inc/class-oobj-ac-saved-carts.php` | "Email me my cart": the form, the REST route, the email and the restore link. |
-| `inc/interface-oobj-ac-bot-check.php`, `inc/class-oobj-ac-turnstile.php` | Bot checks: the adapter interface, and Cloudflare Turnstile. |
+| `inc/interface-oobj-ac-bot-check.php` | The bot check interface. |
+| `inc/adapters/` | Optional integrations: `class-oobj-ac-turnstile.php` (Cloudflare Turnstile as the bot check) and `class-oobj-ac-ga4.php` (Google Analytics 4). |
 | `inc/class-oobj-ac-updates.php`, `inc/class-oobj-ac-github-releases.php` | Updates from the GitHub releases. |
 | `assets/save-cart.js`, `assets/save-cart.css` | The form's script and styles. |
-| `assets/bot-check-turnstile.js` | Turnstile in the browser (`window.oobjAcBotCheck`). |
+| `assets/adapters/` | The adapters' scripts: `turnstile.js` (`window.oobjAcBotCheck`) and `ga4.js` (`save_cart` on `oobj-ac:saved`). |
 | `uninstall.php` | Drops the tables when the plugin is deleted. |

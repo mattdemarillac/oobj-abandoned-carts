@@ -210,9 +210,9 @@ class UpdatesTest extends OOBJ_AC_TestCase {
 	 * @preserveGlobalState disabled
 	 */
 	public function test_the_token_comes_from_wp_config() {
-		$this->assertSame( '', OOBJ_AC_Updates::token() );
+		$this->assertSame( '', OOBJ_AC_Updates::token(), 'None: a public repo' );
 		define( 'OOB_GITHUB_TOKEN', 'theme-token' );
-		$this->assertSame( 'theme-token', OOBJ_AC_Updates::token(), 'The theme\'s, when the plugin has none' );
+		$this->assertSame( '', OOBJ_AC_Updates::token(), 'Not another project\'s' );
 		define( 'OOBJ_AC_GITHUB_TOKEN', 'plugin-token' );
 		$this->assertSame( 'plugin-token', OOBJ_AC_Updates::token() );
 	}

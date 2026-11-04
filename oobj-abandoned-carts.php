@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Saved Carts
  * Description:       Keeps every cart shoppers fill, so you can see the ones that didn't become an order (WooCommerce → Saved carts), and lets shoppers email themselves their cart to come back to on any device.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -20,10 +20,11 @@ declare( strict_types=1 );
 defined( 'ABSPATH' ) || exit;
 
 define( 'OOBJ_ABANDONED_CARTS_FILE', __FILE__ );
-define( 'OOBJ_ABANDONED_CARTS_VERSION', '0.2.0' );
+define( 'OOBJ_ABANDONED_CARTS_VERSION', '0.3.0' );
 
 /*
- * Classes: OOBJ_AC_Foo_Bar lives in inc/class-oobj-ac-foo-bar.php (interfaces in interface-oobj-ac-*.php).
+ * Classes: OOBJ_AC_Foo_Bar lives in inc/class-oobj-ac-foo-bar.php (interfaces in interface-oobj-ac-*.php). Optional
+ * integrations with other services (bot checks, analytics) are adapters, in inc/adapters/.
  */
 spl_autoload_register(
 	function ( $class_name ) {
@@ -31,11 +32,13 @@ spl_autoload_register(
 			return;
 		}
 		$slug = strtolower( str_replace( '_', '-', $class_name ) );
-		foreach ( array( 'class', 'interface' ) as $kind ) {
-			$file = __DIR__ . "/inc/$kind-$slug.php";
-			if ( is_readable( $file ) ) {
-				require $file;
-				return;
+		foreach ( array( 'inc', 'inc/adapters' ) as $folder ) {
+			foreach ( array( 'class', 'interface' ) as $kind ) {
+				$file = __DIR__ . "/$folder/$kind-$slug.php";
+				if ( is_readable( $file ) ) {
+					require $file;
+					return;
+				}
 			}
 		}
 	}

@@ -7,7 +7,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.2.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.3.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 
@@ -35,7 +35,8 @@ WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-
 
 1. Upload the plugin folder to `wp-content/plugins/` (or install the zip from **Plugins → Add New → Upload Plugin**).
 2. Activate it.
-3. If the plugin's GitHub repo is private, add a token that can read it to `wp-config.php`, so updates can be downloaded: `define( 'OOBJ_AC_GITHUB_TOKEN', '…' );` ([development](docs/DEVELOPMENT.md#ci-and-releases)).
+
+New versions then arrive through **Dashboard → Updates** from the plugin's GitHub releases, with nothing to set up ([development](docs/DEVELOPMENT.md#ci-and-releases)).
 
 On activation the plugin creates its two tables (see [Data and privacy](#data-and-privacy)) and imports the carts WooCommerce still has in its sessions (the last 2 to 7 days), so the list isn't empty on day one. The daily clean-up (Action Scheduler, part of WooCommerce) is scheduled on the next admin page load.
 
@@ -100,6 +101,7 @@ There's no settings page. Behaviour is changed with filters ([reference](docs/RE
 | `oobj_ac_retention_days` | `30` | How long carts are kept, and how long "Email me my cart" links work. |
 | `oobj_ac_completed_statuses` | Paid statuses, `on-hold`, `refunded` | Which order statuses count as a completed order (not listed). |
 | `oobj_ac_bot_check` | Turnstile, when it has keys; otherwise none | The bot check on "Email me my cart": another one, or `null` for none. |
+| `oobj_ac_ga4` | `true` | Whether the GA4 adapter's script loads. |
 
 **Bot check (optional).** "Email me my cart" always has the trap field and the limits. A bot check is an extra, plugged in through an adapter ([reference](docs/REFERENCE.md#bot-checks)):
 
@@ -109,7 +111,7 @@ There's no settings page. Behaviour is changed with filters ([reference](docs/RE
 
 **Look:** the form uses the theme's colours and type through WordPress's preset variables (`--wp--preset--color--*`), with plain fallbacks; set `--oobj-ac-field-border` for the email field's border. Its markup and classes are in the [reference](docs/REFERENCE.md#markup).
 
-**Analytics (optional):** when a cart is sent, the form fires the DOM event `oobj-ac:saved`, and sends the GA4 event `save_cart` if the page has `gtag()` ([analytics](docs/ANALYTICS.md)).
+**Analytics (optional).** When a cart is sent, the form fires the DOM event `oobj-ac:saved`. The built-in **Google Analytics 4** adapter turns it into the GA4 event `save_cart`, only on pages that already load GA (`gtag()`); the plugin never loads GA itself. Return `false` from the `oobj_ac_ga4` filter to turn the adapter off, or listen for the event to send it to another tool ([analytics](docs/ANALYTICS.md)).
 
 ## Data and privacy
 
@@ -140,7 +142,8 @@ Done:
 
 - The saved carts list, with the **Emailed** column.
 - "Email me my cart" on the cart and checkout pages, the email, and the link back.
-- PHPUnit tests (71) with 100% line coverage, run against WordPress and WooCommerce.
+- Optional integrations as adapters, in `inc/adapters/` and `assets/adapters/`: Cloudflare Turnstile (bot check) and Google Analytics 4.
+- PHPUnit tests (74) with 100% line coverage, run against WordPress and WooCommerce.
 - Updates from GitHub releases, through **Dashboard → Updates** ([development](docs/DEVELOPMENT.md#ci-and-releases)).
 - A CI build: lint, the tests with 100% coverage, then the release zip.
 - This documentation.

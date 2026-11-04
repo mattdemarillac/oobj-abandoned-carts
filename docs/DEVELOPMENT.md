@@ -39,6 +39,7 @@ Requires PHP 8.1+ and Composer. The tests need a WordPress install with WooComme
 ## Conventions
 
 - Classes are `OOBJ_AC_Foo_Bar` in `inc/class-oobj-ac-foo-bar.php`, loaded by the autoloader in the plugin file. Interfaces are in `inc/interface-oobj-ac-*.php`.
+- **Optional integrations with other services are adapters:** the class in `inc/adapters/`, its script in `assets/adapters/`. The core never names a service: it works through an interface (`OOBJ_AC_Bot_Check`) or an event (`oobj-ac:saved`), and every adapter can be turned off with a filter. Currently: `OOBJ_AC_Turnstile` (bot check) and `OOBJ_AC_GA4` (analytics).
 - Modules implement `OOBJ_AC_Module` (`register()` adds their hooks). `OOBJ_AC_Plugin::boot()` creates them and wires their dependencies. `oobj_abandoned_carts( OOBJ_AC_Store::class )` returns a module.
 - `declare( strict_types=1 );` in every PHP file.
 - Every change comes with tests, and coverage stays at 100% (once it gets there: see the README's Status).
@@ -53,4 +54,4 @@ Requires PHP 8.1+ and Composer. The tests need a WordPress install with WooComme
 
 Until `Version` changes, each push to `main` moves the `v<Version>` tag to the new commit and replaces the release's zip. **To release a new version, bump both `Version` in the plugin header and `OOBJ_ABANDONED_CARTS_VERSION`.**
 
-Sites update through **Dashboard → Updates** ([OOBJ_AC_Updates](../inc/class-oobj-ac-updates.php)): the header's `Update URI` names the repo. A private repo needs a fine-grained token with read access to its contents in the site's `wp-config.php`: `define( 'OOBJ_AC_GITHUB_TOKEN', '…' );` (or the theme's `OOB_GITHUB_TOKEN`, if it can read this repo too). Updates are off on a site whose environment type is `local`.
+Sites update through **Dashboard → Updates** ([OOBJ_AC_Updates](../inc/class-oobj-ac-updates.php)): the header's `Update URI` names the repo, and the update is the latest release's zip. The repo is public, so sites need no token. A private copy (a fork, say) needs a fine-grained token with read access to its contents in the site's `wp-config.php`: `define( 'OOBJ_AC_GITHUB_TOKEN', '…' );`. Without a token GitHub allows 60 API requests an hour per server; WordPress checks twice a day. Updates are off on a site whose environment type is `local`, whose plugin folder is a working copy.

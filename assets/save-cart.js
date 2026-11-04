@@ -4,8 +4,8 @@
  * A bot check, when the site has one (OOBJ_AC_Bot_Check), is window.oobjAcBotCheck: started when the shopper
  * starts on the form, its token() sent as bot_check, reset() after each try. Without one, nothing is sent for it.
  *
- * When the cart is sent, the form fires the DOM event "oobj-ac:saved" (bubbling, from the form) for analytics or
- * anything else, and sends the GA4 event save_cart when the page has gtag().
+ * When the cart is sent, the form fires the DOM event "oobj-ac:saved" (bubbling, from the form), for analytics
+ * adapters (assets/adapters/ga4.js) or anything else.
  */
 ( function () {
 	function botCheck() {
@@ -61,9 +61,6 @@
 					say( 'Sent. Check your inbox for your cart.', false );
 					form.reset();
 					form.dispatchEvent( new CustomEvent( 'oobj-ac:saved', { bubbles: true } ) );
-					if ( 'function' === typeof window.gtag ) {
-						window.gtag( 'event', 'save_cart' );
-					}
 				} )
 				.catch( function ( error ) {
 					say( error.message, true );

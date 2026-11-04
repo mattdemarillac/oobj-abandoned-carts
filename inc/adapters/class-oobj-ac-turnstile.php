@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Cloudflare Turnstile as the bot check, with the keys the plugin Simple Cloudflare Turnstile keeps (its options
  * cfturnstile_key and cfturnstile_secret). Ready only when both are set; the plugin itself needn't be active.
- * Turnstile's own script loads only once the shopper starts on the form (assets/bot-check-turnstile.js). Verifying
+ * Turnstile's own script loads only once the shopper starts on the form (assets/adapters/turnstile.js). Verifying
  * sends the answer and the shopper's IP address to Cloudflare.
  */
 class OOBJ_AC_Turnstile implements OOBJ_AC_Bot_Check {
@@ -28,12 +28,11 @@ class OOBJ_AC_Turnstile implements OOBJ_AC_Bot_Check {
 	}
 
 	public function enqueue(): void {
-		$file = dirname( __DIR__ ) . '/assets/bot-check-turnstile.js';
 		wp_enqueue_script(
 			'oobj-ac-bot-check',
-			plugins_url( 'assets/bot-check-turnstile.js', dirname( __DIR__ ) . '/oobj-abandoned-carts.php' ),
+			plugins_url( 'assets/adapters/turnstile.js', OOBJ_ABANDONED_CARTS_FILE ),
 			array(),
-			(string) filemtime( $file ),
+			(string) filemtime( dirname( OOBJ_ABANDONED_CARTS_FILE ) . '/assets/adapters/turnstile.js' ),
 			array(
 				'in_footer' => true,
 				'strategy'  => 'defer',

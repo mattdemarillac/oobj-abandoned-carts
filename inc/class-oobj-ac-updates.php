@@ -14,9 +14,9 @@ defined( 'ABSPATH' ) || exit;
  * header's Update URI names the repo; WordPress asks this module about a plugin with a github.com Update URI
  * (update_plugins_github.com) and offers the update when the latest release's version is newer than Version.
  *
- * A private repo needs a token that can read it, in wp-config.php: define( 'OOBJ_AC_GITHUB_TOKEN', '…' ) (or the
- * theme's OOB_GITHUB_TOKEN, if it can read this repo too). Off on a local site, whose plugin folder is a working copy
- * (an update would replace it).
+ * A public repo needs nothing more. A private one (a fork, say) needs a token that can read it, in wp-config.php:
+ * define( 'OOBJ_AC_GITHUB_TOKEN', '…' ). Off on a local site, whose plugin folder is a working copy (an update would
+ * replace it).
  */
 class OOBJ_AC_Updates implements OOBJ_AC_Module {
 
@@ -53,15 +53,10 @@ class OOBJ_AC_Updates implements OOBJ_AC_Module {
 	}
 
 	/**
-	 * The token for a private repo, from wp-config.php, or ''.
+	 * The token for a private repo, from wp-config.php (OOBJ_AC_GITHUB_TOKEN), or ''.
 	 */
 	public static function token(): string {
-		foreach ( array( 'OOBJ_AC_GITHUB_TOKEN', 'OOB_GITHUB_TOKEN' ) as $constant ) {
-			if ( defined( $constant ) && is_string( constant( $constant ) ) && '' !== constant( $constant ) ) {
-				return constant( $constant );
-			}
-		}
-		return '';
+		return defined( 'OOBJ_AC_GITHUB_TOKEN' ) && is_string( OOBJ_AC_GITHUB_TOKEN ) ? OOBJ_AC_GITHUB_TOKEN : '';
 	}
 
 	public function register(): void {

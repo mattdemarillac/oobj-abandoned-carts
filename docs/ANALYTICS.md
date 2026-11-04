@@ -8,7 +8,9 @@ What the plugin sends to Google Analytics 4 today, and what to add to tell wheth
 |---|---|---|
 | `save_cart` | The form sent the cart (the REST route answered 200). | None |
 
-It's sent with `gtag()`, only when the page has it (for example through Google Analytics for WooCommerce or Site Kit). For another analytics tool, listen for the DOM event `oobj-ac:saved`, which the form fires at the same time:
+The GA4 adapter (`inc/adapters/class-oobj-ac-ga4.php`, `assets/adapters/ga4.js`) sends it with `gtag()`, only when the page has `gtag()` at that moment (for example through Google Analytics for WooCommerce or Site Kit): without GA on the page, nothing is sent or queued, and the plugin never loads GA itself. Turn the adapter off with the `oobj_ac_ga4` filter.
+
+The form itself knows no analytics: it fires the DOM event `oobj-ac:saved`, which the adapter listens for. For another analytics tool, listen for it too:
 
 ```js
 document.addEventListener( 'oobj-ac:saved', () => plausible( 'Saved cart' ) );

@@ -63,7 +63,7 @@ class TurnstileTest extends OOBJ_AC_TestCase {
 		( new OOBJ_AC_Turnstile() )->enqueue();
 
 		$this->assertTrue( wp_script_is( 'oobj-ac-bot-check', 'enqueued' ) );
-		$this->assertStringContainsString( 'assets/bot-check-turnstile.js', wp_scripts()->registered['oobj-ac-bot-check']->src );
+		$this->assertStringContainsString( 'assets/adapters/turnstile.js', wp_scripts()->registered['oobj-ac-bot-check']->src );
 		$this->assertSame( 'defer', wp_scripts()->get_data( 'oobj-ac-bot-check', 'strategy' ) );
 	}
 

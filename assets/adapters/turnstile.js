@@ -1,5 +1,6 @@
 /**
- * Cloudflare Turnstile as the bot check for "Email me my cart" (OOBJ_AC_Turnstile): window.oobjAcBotCheck, as
+ * Cloudflare Turnstile as the bot check for "Email me my cart" (inc/adapters/class-oobj-ac-turnstile.php):
+ * window.oobjAcBotCheck, as
  * assets/save-cart.js expects. Turnstile's script loads only when start() is first called.
  */
 window.oobjAcBotCheck = ( function () {
