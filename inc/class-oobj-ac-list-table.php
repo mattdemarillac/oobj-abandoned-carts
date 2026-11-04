@@ -44,6 +44,13 @@ class OOBJ_AC_List_Table extends WP_List_Table {
 		'value' => 0.0,
 	);
 
+	/**
+	 * The listed carts' emailed copies (OOBJ_AC_Store::saved_for()), by cart.
+	 *
+	 * @var array<int, array{saved_at: string, restored_at: ?string}>
+	 */
+	private $saved = array();
+
 	public function __construct( OOBJ_AC_Store $store, int $days ) {
 		parent::__construct(
 			array(
@@ -64,6 +71,7 @@ class OOBJ_AC_List_Table extends WP_List_Table {
 			'items'      => __( 'Items', 'oobj-abandoned-carts' ),
 			'total'      => __( 'Total', 'oobj-abandoned-carts' ),
 			'stage'      => __( 'Got as far as', 'oobj-abandoned-carts' ),
+			'emailed'    => __( 'Emailed', 'oobj-abandoned-carts' ),
 			'created_at' => __( 'Started', 'oobj-abandoned-carts' ),
 		);
 	}
@@ -71,6 +79,7 @@ class OOBJ_AC_List_Table extends WP_List_Table {
 	public function prepare_items() {
 		$result                = $this->store->abandoned( $this->days, self::PER_PAGE, $this->get_pagenum() );
 		$this->items           = $result['rows'];
+		$this->saved           = $this->store->saved_for( array_column( $result['rows'], 'id' ) );
 		$this->totals          = array(
 			'carts' => $result['total'],
 			'value' => $result['value'],
@@ -184,6 +193,26 @@ class OOBJ_AC_List_Table extends WP_List_Table {
 				/* translators: %s: order number. */
 				$out .= sprintf( '<br /><a href="%1$s">%2$s</a>', esc_url( $order->get_edit_order_url() ), esc_html( sprintf( __( 'Order #%s', 'oobj-abandoned-carts' ), $order->get_order_number() ) ) );
 			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Whether the shopper emailed themselves the cart ("Email me my cart"), when, and whether they came back
+	 * from the email.
+	 *
+	 * @param array $item The cart.
+	 */
+	public function column_emailed( $item ) {
+		$saved = $this->saved[ (int) $item['id'] ] ?? null;
+		if ( ! $saved ) {
+			return '<span aria-hidden="true">—</span><span class="screen-reader-text">' . esc_html__( 'No', 'oobj-abandoned-carts' ) . '</span>';
+		}
+		/* translators: %s: how long ago, e.g. 2 days. */
+		$out = esc_html( sprintf( __( 'Yes, %s ago', 'oobj-abandoned-carts' ), human_time_diff( (int) strtotime( $saved['saved_at'] . ' UTC' ) ) ) );
+		if ( $saved['restored_at'] ) {
+			/* translators: %s: how long ago. */
+			$out .= '<br />' . esc_html( sprintf( __( 'Came back %s ago', 'oobj-abandoned-carts' ), human_time_diff( (int) strtotime( $saved['restored_at'] . ' UTC' ) ) ) );
 		}
 		return $out;
 	}

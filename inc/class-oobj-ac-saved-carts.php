@@ -139,7 +139,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 	 */
 	public function restore(): void {
 		$token = isset( $_GET[ self::QUERY_VAR ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The token is the authorisation.
-		if ( '' === $token || ! function_exists( 'is_cart' ) || ! is_cart() || ! WC()->cart ) {
+		if ( '' === $token || ! $this->on_page( 'cart' ) || ! WC()->cart ) {
 			return;
 		}
 
@@ -228,7 +228,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 	}
 
 	public function enqueue(): void {
-		if ( ! function_exists( 'is_cart' ) || ! ( is_cart() || is_checkout() ) ) {
+		if ( ! $this->on_page( 'cart' ) && ! $this->on_page( 'checkout' ) ) {
 			return;
 		}
 		$file = dirname( __DIR__ ) . '/oobj-abandoned-carts.php';
@@ -350,6 +350,17 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 		);
 		$data = json_decode( (string) wp_remote_retrieve_body( $answer ), true );
 		return is_array( $data ) && ! empty( $data['success'] );
+	}
+
+	/**
+	 * Whether this is the store's cart or checkout page. Not is_cart(), which is also true wherever
+	 * WOOCOMMERCE_CART was defined.
+	 *
+	 * @param string $page 'cart' or 'checkout'.
+	 */
+	private function on_page( string $page ): bool {
+		$id = wc_get_page_id( $page );
+		return $id > 0 && is_page( $id );
 	}
 
 	/**
