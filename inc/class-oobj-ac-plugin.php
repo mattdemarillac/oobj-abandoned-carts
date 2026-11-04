@@ -28,6 +28,22 @@ class OOBJ_AC_Plugin {
 		$this->add( new OOBJ_AC_Cleanup( $store ) );
 		$this->add( new OOBJ_AC_Admin_Page( $store ) );
 		$this->add( new OOBJ_AC_Saved_Carts( $store ) );
+		$this->add(
+			new OOBJ_AC_Updates(
+				new OOBJ_AC_GitHub_Releases( OOBJ_AC_GitHub_Releases::repo_from_url( self::header( 'Update URI' ) ), dirname( plugin_basename( OOBJ_ABANDONED_CARTS_FILE ) ), OOBJ_AC_Updates::token() ),
+				plugin_basename( OOBJ_ABANDONED_CARTS_FILE ),
+				wp_get_environment_type()
+			)
+		);
+	}
+
+	/**
+	 * A header of the plugin's file, e.g. "Update URI".
+	 *
+	 * @param string $name The header.
+	 */
+	public static function header( string $name ): string {
+		return (string) get_file_data( OOBJ_ABANDONED_CARTS_FILE, array( 'value' => $name ) )['value'];
 	}
 
 	/**

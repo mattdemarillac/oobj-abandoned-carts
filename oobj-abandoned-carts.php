@@ -6,6 +6,7 @@
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
+ * Update URI:        https://github.com/mattdemarillac/oobj-abandoned-carts
  * Author:            Out Of Body Jewellery
  * License:           Use and modification permitted, no redistribution (see LICENSE)
  * License URI:       LICENSE
