@@ -1,44 +1,34 @@
 /**
- * "Email me my cart" (OOBJ_AC_Saved_Carts): sends the form to the REST route and says how it went. Turnstile's
- * script loads only once the shopper starts on the form, so the cart page doesn't pay for it otherwise.
+ * "Email me my cart" (OOBJ_AC_Saved_Carts): sends the form to the REST route and says how it went.
+ *
+ * A bot check, when the site has one (OOBJ_AC_Bot_Check), is window.oobjAcBotCheck: started when the shopper
+ * starts on the form, its token() sent as bot_check, reset() after each try. Without one, nothing is sent for it.
+ *
+ * When the cart is sent, the form fires the DOM event "oobj-ac:saved" (bubbling, from the form) for analytics or
+ * anything else, and sends the GA4 event save_cart when the page has gtag().
  */
 ( function () {
-	const TURNSTILE = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+	function botCheck() {
+		return window.oobjAcBotCheck || null;
+	}
 
 	document.querySelectorAll( '.oobj-ac-save__form' ).forEach( function ( form ) {
 		const email = form.querySelector( '[name="email"]' );
 		const trap = form.querySelector( '[name="website"]' );
 		const button = form.querySelector( 'button' );
 		const status = form.querySelector( '.oobj-ac-save__status' );
-		const box = form.querySelector( '.oobj-ac-save__turnstile' );
-		let widget = null;
+		const checkElement = form.querySelector( '[data-oobj-ac-bot-check]' );
 
 		function say( text, error ) {
 			status.textContent = text;
 			status.classList.toggle( 'is-error', !! error );
 		}
 
-		// Turnstile, when the store has a site key: its script, then the widget, once.
-		function turnstile() {
-			if ( ! box || null !== widget ) {
-				return;
+		email.addEventListener( 'focus', function () {
+			if ( checkElement && botCheck() ) {
+				botCheck().start( checkElement );
 			}
-			widget = false;
-			const render = function () {
-				widget = window.turnstile.render( box, { sitekey: box.dataset.sitekey } );
-			};
-			if ( window.turnstile ) {
-				render();
-				return;
-			}
-			const script = document.createElement( 'script' );
-			script.src = TURNSTILE;
-			script.async = true;
-			script.addEventListener( 'load', render );
-			document.head.appendChild( script );
-		}
-
-		email.addEventListener( 'focus', turnstile );
+		} );
 
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
@@ -57,7 +47,7 @@
 					body: JSON.stringify( {
 						email: email.value,
 						website: trap ? trap.value : '',
-						turnstile: widget && window.turnstile ? window.turnstile.getResponse( widget ) || '' : '',
+						bot_check: botCheck() ? botCheck().token() : '',
 					} ),
 				} )
 				.then( function ( response ) {
@@ -70,6 +60,7 @@
 				.then( function () {
 					say( 'Sent. Check your inbox for your cart.', false );
 					form.reset();
+					form.dispatchEvent( new CustomEvent( 'oobj-ac:saved', { bubbles: true } ) );
 					if ( 'function' === typeof window.gtag ) {
 						window.gtag( 'event', 'save_cart' );
 					}
@@ -79,8 +70,8 @@
 				} )
 				.finally( function () {
 					button.disabled = false;
-					if ( widget && window.turnstile ) {
-						window.turnstile.reset( widget );
+					if ( botCheck() ) {
+						botCheck().reset();
 					}
 				} );
 		} );

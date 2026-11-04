@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * still for sale to the cart they have open, then drops the token from the address.
  *
  * Against misuse (it sends email from the store's domain): it needs a cart in the shopper's session, a
- * hidden field bots fill in, Cloudflare Turnstile when Simple Cloudflare Turnstile has keys, and at most
+ * hidden field bots fill in, a bot check when one is set up (bot_check(): Cloudflare Turnstile by default), and at most
  * MAX_PER_EMAIL emails to an address a day and MAX_PER_IP per IP an hour. The address is used only to send
  * the cart; the cart's record (WooCommerce → Saved carts) gets it if it had none.
  */
@@ -41,10 +41,30 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 	private $store;
 
 	/**
-	 * @param OOBJ_AC_Store $store The carts' records.
+	 * The bot check offered to the filter oobj_ac_bot_check, or null.
+	 *
+	 * @var OOBJ_AC_Bot_Check|null
 	 */
-	public function __construct( OOBJ_AC_Store $store ) {
-		$this->store = $store;
+	private $default_bot_check;
+
+	/**
+	 * @param OOBJ_AC_Store          $store     The carts' records.
+	 * @param OOBJ_AC_Bot_Check|null $bot_check The bot check to use when it's ready, unless the filter
+	 *                                          oobj_ac_bot_check picks another (OOBJ_AC_Turnstile), or null.
+	 */
+	public function __construct( OOBJ_AC_Store $store, ?OOBJ_AC_Bot_Check $bot_check = null ) {
+		$this->store             = $store;
+		$this->default_bot_check = $bot_check;
+	}
+
+	/**
+	 * The bot check in use: the default one when it's ready, or what the filter oobj_ac_bot_check returns (another
+	 * OOBJ_AC_Bot_Check, or null for none). One that isn't ready() isn't used.
+	 */
+	public function bot_check(): ?OOBJ_AC_Bot_Check {
+		$default = $this->default_bot_check && $this->default_bot_check->ready() ? $this->default_bot_check : null;
+		$check   = apply_filters( 'oobj_ac_bot_check', $default );
+		return $check instanceof OOBJ_AC_Bot_Check && $check->ready() ? $check : null;
 	}
 
 	public function register(): void {
@@ -69,7 +89,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 						'required' => true,
 					),
 					'website'   => array( 'type' => 'string' ),
-					'turnstile' => array( 'type' => 'string' ),
+					'bot_check' => array( 'type' => 'string' ),
 				),
 			)
 		);
@@ -92,9 +112,10 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 			return new WP_Error( 'oobj_ac_email', __( 'Enter a valid email address.', 'oobj-abandoned-carts' ), array( 'status' => 400 ) );
 		}
 
-		$ip = (string) WC_Geolocation::get_ip_address();
-		if ( ! $this->turnstile_passed( (string) $request->get_param( 'turnstile' ), $ip ) ) {
-			return new WP_Error( 'oobj_ac_turnstile', __( 'Please confirm you\'re not a robot, then try again.', 'oobj-abandoned-carts' ), array( 'status' => 400 ) );
+		$ip    = (string) WC_Geolocation::get_ip_address();
+		$check = $this->bot_check();
+		if ( $check && ! $check->verify( (string) $request->get_param( 'bot_check' ), $ip ) ) {
+			return new WP_Error( 'oobj_ac_bot_check', __( 'Please confirm you\'re not a robot, then try again.', 'oobj-abandoned-carts' ), array( 'status' => 400 ) );
 		}
 
 		$ip_key = 'oobj_ac_saves_' . md5( $ip );
@@ -205,7 +226,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 		if ( ! WC()->cart || WC()->cart->is_empty() ) {
 			return '';
 		}
-		$site_key = (string) get_option( 'cfturnstile_key', '' );
+		$check = $this->bot_check();
 		ob_start();
 		?>
 		<?php if ( $collapsed ) : ?>
@@ -224,9 +245,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 				</div>
 				<?php /* Bots fill it in; people don't see it. */ ?>
 				<input class="oobj-ac-save__trap" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />
-				<?php if ( '' !== $site_key ) : ?>
-					<div class="oobj-ac-save__turnstile" data-sitekey="<?php echo esc_attr( $site_key ); ?>"></div>
-				<?php endif; ?>
+				<?php echo $check ? $check->markup() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The bot check escapes its markup. ?>
 				<p class="oobj-ac-save__status" role="status" aria-live="polite"></p>
 			</form>
 		<?php echo $collapsed ? '</details>' : '</section>'; ?>
@@ -250,6 +269,10 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 				'strategy'  => 'defer',
 			)
 		);
+		$check = $this->bot_check();
+		if ( $check ) {
+			$check->enqueue();
+		}
 	}
 
 	/**
@@ -328,35 +351,6 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 			sprintf( __( 'Your saved cart at %s', 'oobj-abandoned-carts' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) ),
 			$mailer->wrap_message( __( 'Your saved cart', 'oobj-abandoned-carts' ), $body )
 		);
-	}
-
-	/**
-	 * Whether Turnstile passed, or isn't set up (no secret key in Simple Cloudflare Turnstile).
-	 *
-	 * @param string $response The widget's response.
-	 * @param string $ip       The shopper's IP.
-	 */
-	private function turnstile_passed( string $response, string $ip ): bool {
-		$secret = (string) get_option( 'cfturnstile_secret', '' );
-		if ( '' === $secret ) {
-			return true;
-		}
-		if ( '' === $response ) {
-			return false;
-		}
-		$answer = wp_remote_post(
-			'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-			array(
-				'timeout' => 10,
-				'body'    => array(
-					'secret'   => $secret,
-					'response' => $response,
-					'remoteip' => $ip,
-				),
-			)
-		);
-		$data   = json_decode( (string) wp_remote_retrieve_body( $answer ), true );
-		return is_array( $data ) && ! empty( $data['success'] );
 	}
 
 	/**

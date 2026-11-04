@@ -7,7 +7,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.1.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.2.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 
@@ -29,7 +29,7 @@ WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-
 | WordPress | 6.6 or later |
 | PHP | 8.1 or later |
 | WooCommerce | Active (the plugin declares `Requires Plugins: woocommerce`). Works with the block cart and checkout, and records orders from the classic checkout too. |
-| Optional | [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/), for a bot check on "Email me my cart" ([Configuration](#configuration)). |
+| Optional | A bot check for "Email me my cart": Cloudflare Turnstile with the keys from [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/), or your own ([Configuration](#configuration)). Nothing else is required. |
 
 ## Installation
 
@@ -86,7 +86,7 @@ Against misuse (the form sends email from the store's domain):
 
 - the shopper's session must have a cart;
 - a hidden field that people don't see and bots fill in: a filled-in field gets a "sent" answer and nothing is sent;
-- **Cloudflare Turnstile** when Simple Cloudflare Turnstile has keys ([Configuration](#configuration));
+- a **bot check** when one is set up, such as Cloudflare Turnstile ([Configuration](#configuration));
 - at most **3 emails to an address a day** and **5 emails from one IP address an hour**.
 
 The address is used only to send that cart. It isn't added to any mailing list, and the form says so.
@@ -99,10 +99,17 @@ There's no settings page. Behaviour is changed with filters ([reference](docs/RE
 |---|---|---|
 | `oobj_ac_retention_days` | `30` | How long carts are kept, and how long "Email me my cart" links work. |
 | `oobj_ac_completed_statuses` | Paid statuses, `on-hold`, `refunded` | Which order statuses count as a completed order (not listed). |
+| `oobj_ac_bot_check` | Turnstile, when it has keys; otherwise none | The bot check on "Email me my cart": another one, or `null` for none. |
 
-**Turnstile:** install and set up [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/). When its site key and secret key are saved, "Email me my cart" shows the Turnstile widget (its script loads only once the shopper starts on the form) and the server checks each answer with Cloudflare. Without keys, the form works without it.
+**Bot check (optional).** "Email me my cart" always has the trap field and the limits. A bot check is an extra, plugged in through an adapter ([reference](docs/REFERENCE.md#bot-checks)):
 
-**Look:** the form uses the theme's colours and type through WordPress's preset variables (`--wp--preset--color--*`), with plain fallbacks. Its markup and classes are in the [reference](docs/REFERENCE.md#markup).
+- **Cloudflare Turnstile** is built in. It's used when the keys from [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) are saved (both the site key and the secret key). Its script loads only once the shopper starts on the form, and the server checks each answer with Cloudflare.
+- **Another check** (reCAPTCHA, hCaptcha, your own): implement `OOBJ_AC_Bot_Check` and return it from the `oobj_ac_bot_check` filter.
+- **None:** without Turnstile keys there's none, or return `null` from the filter to turn Turnstile off.
+
+**Look:** the form uses the theme's colours and type through WordPress's preset variables (`--wp--preset--color--*`), with plain fallbacks; set `--oobj-ac-field-border` for the email field's border. Its markup and classes are in the [reference](docs/REFERENCE.md#markup).
+
+**Analytics (optional):** when a cart is sent, the form fires the DOM event `oobj-ac:saved`, and sends the GA4 event `save_cart` if the page has `gtag()` ([analytics](docs/ANALYTICS.md)).
 
 ## Data and privacy
 
@@ -116,7 +123,7 @@ The plugin stores personal data. Mention it in the store's privacy policy.
 Also:
 
 - **IP addresses aren't stored.** The per-IP limit is a transient keyed by a hash of the IP that expires after an hour.
-- **Turnstile** (when set up) sends the shopper's IP address and the widget's answer to Cloudflare to check them.
+- **Turnstile** (when it's the bot check) sends the shopper's IP address and the widget's answer to Cloudflare to check them.
 - The plugin's option is `oobj_ac_db_version`, its session keys are `oobj_ac` and `oobj_ac_restored`, and its Action Scheduler hook is `oobj_ac_prune` (group `oobj-abandoned-carts`).
 
 ## Uninstalling
@@ -133,7 +140,7 @@ Done:
 
 - The saved carts list, with the **Emailed** column.
 - "Email me my cart" on the cart and checkout pages, the email, and the link back.
-- PHPUnit tests (65) with 100% line coverage, run against WordPress and WooCommerce.
+- PHPUnit tests (71) with 100% line coverage, run against WordPress and WooCommerce.
 - Updates from GitHub releases, through **Dashboard → Updates** ([development](docs/DEVELOPMENT.md#ci-and-releases)).
 - A CI build: lint, the tests with 100% coverage, then the release zip.
 - This documentation.

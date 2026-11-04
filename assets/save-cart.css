@@ -1,4 +1,5 @@
-/* "Email me my cart" under the cart, and collapsed under the checkout. Colours and type from the theme. */
+/* "Email me my cart" under the cart, and collapsed under the checkout. Colours and type from the theme's presets
+   (--wp--preset--*), with fallbacks. --oobj-ac-field-border sets the email field's border. */
 .oobj-ac-save {
 	max-width: 640px;
 	margin: 40px auto 0;
@@ -33,7 +34,7 @@
 	flex: 1 1 220px;
 	min-height: 44px;
 	padding: 0 12px;
-	border: 1px solid var(--oob-field-border, #8a8a8a);
+	border: 1px solid var(--oobj-ac-field-border, #8a8a8a);
 	border-radius: 4px;
 	background: var(--wp--preset--color--base, #fff);
 	font: inherit;
@@ -63,7 +64,7 @@
 	height: 1px;
 }
 
-.oobj-ac-save__turnstile:not(:empty) {
+.oobj-ac-save__bot-check:not(:empty) {
 	margin-top: 12px;
 }
 

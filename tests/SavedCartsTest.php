@@ -55,12 +55,13 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 		remove_all_filters( 'pre_http_request' );
 		remove_all_filters( 'wp_redirect' );
+		remove_all_filters( 'oobj_ac_bot_check' );
 		wc_clear_notices();
 		parent::tear_down();
 	}
 
-	private function module(): OOBJ_AC_Test_Saved_Carts {
-		return new OOBJ_AC_Test_Saved_Carts( $this->store() );
+	private function module( ?OOBJ_AC_Bot_Check $bot_check = null ): OOBJ_AC_Test_Saved_Carts {
+		return new OOBJ_AC_Test_Saved_Carts( $this->store(), $bot_check ?? new OOBJ_AC_Turnstile() );
 	}
 
 	private function request( array $params ): WP_REST_Response {
@@ -172,32 +173,66 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 	}
 
 	public function test_turnstile_when_it_has_keys() {
+		update_option( 'cfturnstile_key', 'site-key' );
 		update_option( 'cfturnstile_secret', 'secret' );
 		$this->add_to_cart( $this->create_product() );
 
 		$response = $this->request( array( 'email' => 'sam@example.org' ) );
-		$this->assertSame( 'oobj_ac_turnstile', $response->get_data()['code'], 'No answer from the widget' );
+		$this->assertSame( 'oobj_ac_bot_check', $response->get_data()['code'], 'No answer from the widget' );
 
 		$this->turnstile_answers( false );
 		$response = $this->request(
 			array(
 				'email'     => 'sam@example.org',
-				'turnstile' => 'token',
+				'bot_check' => 'token',
 			)
 		);
 		$this->assertSame( 400, $response->get_status() );
-		$this->assertSame( 'oobj_ac_turnstile', $response->get_data()['code'] );
+		$this->assertSame( 'oobj_ac_bot_check', $response->get_data()['code'] );
 
 		remove_all_filters( 'pre_http_request' );
 		$this->turnstile_answers( true );
 		$response = $this->request(
 			array(
 				'email'     => 'sam@example.org',
-				'turnstile' => 'token',
+				'bot_check' => 'token',
 			)
 		);
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertCount( 1, $this->sent() );
+	}
+
+	public function test_another_bot_check_through_the_filter_or_none() {
+		$check = new OOBJ_AC_Test_Bot_Check();
+		add_filter( 'oobj_ac_bot_check', fn() => $check );
+		$this->add_to_cart( $this->create_product() );
+
+		$this->assertSame( $check, $this->module()->bot_check() );
+		$this->assertSame( 400, $this->request( array( 'email' => 'sam@example.org' ) )->get_status() );
+		$response = $this->request(
+			array(
+				'email'     => 'sam@example.org',
+				'bot_check' => 'human',
+			)
+		);
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( array( '', 'human' ), $check->verified, 'No answer, then a passing one' );
+		$this->assertStringContainsString( '<div data-oobj-ac-bot-check="test"></div>', $this->module()->form( '' ) );
+
+		$check->is_ready = false;
+		$this->assertNull( $this->module()->bot_check(), 'One that isn\'t ready isn\'t used' );
+
+		remove_all_filters( 'oobj_ac_bot_check' );
+		add_filter( 'oobj_ac_bot_check', '__return_null' );
+		update_option( 'cfturnstile_key', 'site-key' );
+		update_option( 'cfturnstile_secret', 'secret' );
+		$this->assertNull( $this->module()->bot_check(), 'Turned off' );
+		$this->assertSame( 200, $this->request( array( 'email' => 'other@example.org' ) )->get_status() );
+	}
+
+	public function test_no_bot_check_without_one_set_up() {
+		$this->assertNull( ( new OOBJ_AC_Saved_Carts( $this->store() ) )->bot_check(), 'None given' );
+		$this->assertNull( $this->module()->bot_check(), 'Turnstile without keys' );
 	}
 
 	public function test_limits_emails_per_address_and_per_ip() {
@@ -331,6 +366,7 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 		$this->assertSame( '<div>cart</div>', $module->form( '<div>cart</div>' ), 'Nothing for an empty cart' );
 
 		update_option( 'cfturnstile_key', 'site-key' );
+		update_option( 'cfturnstile_secret', 'secret' );
 		$this->add_to_cart( $this->create_product() );
 		$cart = $module->form( '<div>cart</div>' );
 
@@ -340,20 +376,21 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 		$this->assertStringContainsString( 'id="oobj-ac-email" name="email" type="email" autocomplete="email" required', $cart );
 		$this->assertStringContainsString( 'data-url="' . rest_url( 'oobj-ac/v1/saved-carts' ) . '"', $cart );
 		$this->assertStringContainsString( 'name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true"', $cart );
-		$this->assertStringContainsString( 'data-sitekey="site-key"', $cart );
+		$this->assertStringContainsString( '<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="site-key"></div>', $cart );
 		$this->assertStringContainsString( 'role="status" aria-live="polite"', $cart );
 
 		$checkout = $module->checkout_form( '<div>checkout</div>' );
 		$this->assertMatchesRegularExpression( '#<details class="oobj-ac-save oobj-ac-save--collapsed" id="save-cart">\s*<summary>Not ready to buy\? Email yourself this cart</summary>#', $checkout );
 		$this->assertStringEndsWith( '</details>', trim( $checkout ) );
 
-		delete_option( 'cfturnstile_key' );
-		$this->assertStringNotContainsString( 'data-sitekey', $module->form( '' ), 'No widget without a key' );
+		delete_option( 'cfturnstile_secret' );
+		$this->assertStringNotContainsString( 'data-oobj-ac-bot-check', $module->form( '' ), 'No check without both keys' );
 	}
 
 	public function test_script_and_styles_on_the_cart_and_checkout_only() {
 		$module = $this->module();
 		wp_dequeue_script( 'oobj-ac-save' );
+		wp_dequeue_script( 'oobj-ac-bot-check' );
 		wp_dequeue_style( 'oobj-ac-save' );
 		$this->go_to( home_url( '/' ) );
 		$module->enqueue();
@@ -364,6 +401,12 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 		$this->assertTrue( wp_script_is( 'oobj-ac-save', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'oobj-ac-save', 'enqueued' ) );
 		$this->assertSame( 'defer', wp_scripts()->get_data( 'oobj-ac-save', 'strategy' ) );
+		$this->assertFalse( wp_script_is( 'oobj-ac-bot-check', 'enqueued' ), 'No bot check set up' );
+
+		update_option( 'cfturnstile_key', 'site-key' );
+		update_option( 'cfturnstile_secret', 'secret' );
+		$module->enqueue();
+		$this->assertTrue( wp_script_is( 'oobj-ac-bot-check', 'enqueued' ) );
 	}
 
 	public function test_admin_list_has_an_emailed_column() {

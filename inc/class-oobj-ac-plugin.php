@@ -27,7 +27,7 @@ class OOBJ_AC_Plugin {
 		$this->add( new OOBJ_AC_Tracker( $store ) );
 		$this->add( new OOBJ_AC_Cleanup( $store ) );
 		$this->add( new OOBJ_AC_Admin_Page( $store ) );
-		$this->add( new OOBJ_AC_Saved_Carts( $store ) );
+		$this->add( new OOBJ_AC_Saved_Carts( $store, new OOBJ_AC_Turnstile() ) );
 		$this->add(
 			new OOBJ_AC_Updates(
 				new OOBJ_AC_GitHub_Releases( OOBJ_AC_GitHub_Releases::repo_from_url( self::header( 'Update URI' ) ), dirname( plugin_basename( OOBJ_ABANDONED_CARTS_FILE ) ), OOBJ_AC_Updates::token() ),

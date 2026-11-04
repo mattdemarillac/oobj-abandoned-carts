@@ -3,6 +3,8 @@
 Hooks, the REST route, the database tables and the front-end markup. For what the plugin does, see the [README](../README.md).
 
 - [Filters](#filters)
+- [Bot checks](#bot-checks)
+- [Browser events](#browser-events)
 - [WordPress and WooCommerce hooks the plugin uses](#wordpress-and-woocommerce-hooks-the-plugin-uses)
 - [REST route](#rest-route)
 - [The restore link](#the-restore-link)
@@ -35,6 +37,48 @@ add_filter( 'oobj_ac_completed_statuses', function ( array $statuses ) {
 
 Default: WooCommerce's paid statuses (`wc_get_is_paid_statuses()`: processing and completed), plus `on-hold` and `refunded`.
 
+### `oobj_ac_bot_check`
+
+The bot check on "Email me my cart": an `OOBJ_AC_Bot_Check`, or `null` for none. It receives the built-in Cloudflare Turnstile when that has its keys (else `null`). A check whose `ready()` is false isn't used.
+
+```php
+add_filter( 'oobj_ac_bot_check', fn() => new My_Recaptcha_Check() ); // Your own.
+add_filter( 'oobj_ac_bot_check', '__return_null' );                 // None.
+```
+
+## Bot checks
+
+A bot check is an adapter: a PHP class for the server and a script for the browser.
+
+**PHP:** implement `OOBJ_AC_Bot_Check` (`inc/interface-oobj-ac-bot-check.php`):
+
+| Method | |
+|---|---|
+| `ready(): bool` | Whether it's set up (has its keys). One that isn't ready isn't used. |
+| `markup(): string` | What goes in the form, escaped: an element with a `data-oobj-ac-bot-check` attribute, where the check shows. |
+| `enqueue(): void` | Enqueues its script, on the cart and checkout pages. |
+| `verify( string $answer, string $ip ): bool` | Whether the answer the browser sent passes. An empty answer should fail. |
+
+**Browser:** the script defines `window.oobjAcBotCheck`:
+
+| Method | |
+|---|---|
+| `start( element )` | Shows the check in the element from `markup()`. Called when the shopper starts on the form (focus on the email field); load the provider's script here, not before. |
+| `token()` | The answer to send, or `''`. Sent as the REST parameter `bot_check`. |
+| `reset()` | After each try, so the next one gets a fresh answer. |
+
+The built-in **Cloudflare Turnstile** (`OOBJ_AC_Turnstile`, `assets/bot-check-turnstile.js`) is an example: it's ready when the options `cfturnstile_key` and `cfturnstile_secret` (from Simple Cloudflare Turnstile) are both set, and verifies with `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
+
+## Browser events
+
+| Event | Fired on | When |
+|---|---|---|
+| `oobj-ac:saved` | The form (bubbles) | A cart was sent: listen on `document` for analytics or anything else. |
+
+```js
+document.addEventListener( 'oobj-ac:saved', () => { /* … */ } );
+```
+
 ## WordPress and WooCommerce hooks the plugin uses
 
 | Hook | What the plugin does |
@@ -48,7 +92,7 @@ Default: WooCommerce's paid statuses (`wc_get_is_paid_statuses()`: processing an
 | `render_block_woocommerce/checkout` | Adds the collapsed form after the Checkout block. |
 | `template_redirect` | Restores an emailed cart on the cart page (`?saved-cart=`). |
 | `rest_api_init` | Registers the REST route. |
-| `wp_enqueue_scripts` | Loads the form's script and styles on the cart and checkout pages only. |
+| `wp_enqueue_scripts` | Loads the form's script and styles, and the bot check's script, on the cart and checkout pages only. |
 | `admin_menu`, `admin_enqueue_scripts` | The **Saved carts** page and its styles. |
 | `oobj_ac_prune` (Action Scheduler, daily) | Deletes carts past the retention period and emailed carts whose links have expired. |
 
@@ -61,7 +105,7 @@ Emails the shopper's current cart to them. Public (no authentication): it works 
 | Parameter | Type | |
 |---|---|---|
 | `email` | string, required | Where to send it. |
-| `turnstile` | string | Turnstile's answer, when Turnstile is set up. |
+| `bot_check` | string | The bot check's answer (`window.oobjAcBotCheck.token()`), when there's a bot check. |
 | `website` | string | The hidden trap field. Anything in it: the answer is `{"sent": true}` and nothing is sent. |
 
 Answers:
@@ -70,7 +114,7 @@ Answers:
 |---|---|---|
 | 200 | | `{"sent": true}`: sent (or the trap field was filled in). |
 | 400 | `oobj_ac_email` | Not a valid email address. |
-| 400 | `oobj_ac_turnstile` | Turnstile is set up and its answer is missing or failed. |
+| 400 | `oobj_ac_bot_check` | There's a bot check and the answer is missing or doesn't pass. |
 | 400 | `oobj_ac_empty` | The session has no cart, or it's empty. |
 | 429 | `oobj_ac_limit` | 3 emails to the address in the last day, or 5 from the IP address in the last hour. |
 
@@ -136,7 +180,7 @@ The cart page's form (after the Cart block):
 			<button class="oobj-ac-save__button wp-element-button" type="submit">Email me my cart</button>
 		</div>
 		<input class="oobj-ac-save__trap" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />
-		<div class="oobj-ac-save__turnstile" data-sitekey="…"></div> <!-- only with Turnstile keys -->
+		<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="…"></div> <!-- the bot check's markup(), when there is one -->
 		<p class="oobj-ac-save__status" role="status" aria-live="polite"></p>
 	</form>
 </section>
@@ -144,7 +188,7 @@ The cart page's form (after the Cart block):
 
 Under the checkout, the same form inside `<details class="oobj-ac-save oobj-ac-save--collapsed" id="save-cart"><summary>…</summary>…</details>`. The status line gets `is-error` for errors. Link to `#save-cart` to send shoppers to the form.
 
-The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted`, `--contrast`, `--base` and `--wp--preset--font-size--large` when the theme defines them, and `--oob-field-border` for the field's border.
+The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted`, `--contrast`, `--base` and `--wp--preset--font-size--large` when the theme defines them, and `--oobj-ac-field-border` (default `#8a8a8a`) for the email field's border.
 
 ## Code layout
 
@@ -159,5 +203,8 @@ The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted
 | `inc/class-oobj-ac-stage.php` | How far a cart got, and which order statuses count as completed. |
 | `inc/class-oobj-ac-admin-page.php`, `inc/class-oobj-ac-list-table.php` | The **Saved carts** page. |
 | `inc/class-oobj-ac-saved-carts.php` | "Email me my cart": the form, the REST route, the email and the restore link. |
+| `inc/interface-oobj-ac-bot-check.php`, `inc/class-oobj-ac-turnstile.php` | Bot checks: the adapter interface, and Cloudflare Turnstile. |
+| `inc/class-oobj-ac-updates.php`, `inc/class-oobj-ac-github-releases.php` | Updates from the GitHub releases. |
 | `assets/save-cart.js`, `assets/save-cart.css` | The form's script and styles. |
+| `assets/bot-check-turnstile.js` | Turnstile in the browser (`window.oobjAcBotCheck`). |
 | `uninstall.php` | Drops the tables when the plugin is deleted. |

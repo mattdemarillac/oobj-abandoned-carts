@@ -45,6 +45,7 @@ require $oobj_tests_dir . '/includes/bootstrap.php';
 require __DIR__ . '/class-oobj-ac-testcase.php';
 require __DIR__ . '/class-oobj-ac-test-stopped.php';
 require __DIR__ . '/class-oobj-ac-test-saved-carts.php';
+require __DIR__ . '/class-oobj-ac-test-bot-check.php';
 
 if ( $oobj_pcov ) {
 	\pcov\stop();
