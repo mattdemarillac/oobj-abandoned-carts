@@ -15,13 +15,15 @@
 		"test": "tests/bin/phpunit.sh",
 		"lint": "phpcs",
 		"lint:fix": "phpcbf; test $? -le 1",
-		"test:coverage": "tests/bin/coverage.sh"
+		"test:coverage": "tests/bin/coverage.sh",
+		"test:js": "npm test"
 	},
 	"scripts-descriptions": {
 		"test": "PHPUnit tests, in the litespeed container of the local stack (args go to PHPUnit, e.g. -- --filter Tracker).",
 		"lint": "Check PHP against the WordPress Coding Standards (phpcs.xml.dist).",
 		"lint:fix": "Fix what phpcbf can fix automatically.",
-		"test:coverage": "PHPUnit with code coverage (PCOV, built once into tests/coverage/); fails below 100% of lines. HTML report in tests/coverage/html/."
+		"test:coverage": "PHPUnit with code coverage (PCOV, built once into tests/coverage/); fails below 100% of lines. HTML report in tests/coverage/html/.",
+		"test:js": "Jest tests of the scripts in assets/, with coverage; fails below 100%. Needs npm install."
 	},
 	"config": {
 		"sort-packages": true,

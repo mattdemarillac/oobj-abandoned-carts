@@ -9,7 +9,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.3.2).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.4.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 
@@ -75,6 +75,7 @@ What the shopper sees:
 
 - **Cart page:** under the cart, "Not ready to check out?" with an email field and an **Email me my cart** button. It shows only when the cart has something in it.
 - **Checkout:** the same form under the checkout, collapsed behind "Not ready to buy? Email yourself this cart", so it isn't in the way of paying.
+- **Mini cart:** WooCommerce's Mini-Cart drawer gets an **Email me this cart** link under its buttons, to the form on the cart page with the cursor in the email field. Pages cached before the plugin was installed show it once they're rebuilt; updating the plugin through WordPress normally purges the cache.
 - **The email** ("Your saved cart at *store name*", in WooCommerce's email template): each item with its photo, name, quantity and price, and a **Back to my cart** button.
 - **The link** works for 30 days (the retention period), on any device. It adds every item that's still for sale to the cart the shopper has open, then shows the cart with "Your saved cart is back." Items that are out of stock or gone are skipped with "No longer available: *names*." Opening the link twice in one session doesn't add the items twice. An expired or unknown link says "That saved cart link has expired."
 
@@ -107,7 +108,7 @@ There's no settings page. Behaviour is changed with filters ([reference](docs/RE
 
 **Bot check (optional).** "Email me my cart" always has the trap field and the limits. A bot check is an extra, plugged in through an adapter ([reference](docs/REFERENCE.md#bot-checks)):
 
-- **Cloudflare Turnstile** is built in. It's used when the keys from [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) are saved (both the site key and the secret key). Its script loads only once the shopper starts on the form, and the server checks each answer with Cloudflare.
+- **Cloudflare Turnstile** is built in. It's used when the keys from [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/) are saved (both the site key and the secret key), and it follows that plugin's settings: the widget's **appearance** ("Interaction Only" keeps it hidden unless Cloudflare needs the shopper to do something), theme, size, language and refresh timeout; its **whitelist** (signed-in users, IP addresses, user agents get no check at all); and its **failsafe** (set to allow: no check while Cloudflare is down). Its script loads only once the shopper starts on the form; with an invisible check, sending waits up to 5 seconds for its answer. The server checks each answer with Cloudflare.
 - **Another check** (reCAPTCHA, hCaptcha, your own): implement `OOBJ_AC_Bot_Check` and return it from the `oobj_ac_bot_check` filter.
 - **None:** without Turnstile keys there's none, or return `null` from the filter to turn Turnstile off.
 
@@ -145,15 +146,15 @@ Done:
 - The saved carts list, with the **Emailed** column.
 - "Email me my cart" on the cart and checkout pages, the email, and the link back.
 - Optional integrations as adapters, in `inc/adapters/` and `assets/adapters/`: Cloudflare Turnstile (bot check) and Google Analytics 4.
-- PHPUnit tests (74) with 100% line coverage, run against WordPress and WooCommerce.
+- PHPUnit tests (77) and Jest tests of the scripts (23), each with 100% coverage.
+- The **Email me this cart** link in the mini cart.
 - Updates from GitHub releases, through **Dashboard → Updates** ([development](docs/DEVELOPMENT.md#ci-and-releases)).
-- A CI build: lint, the tests with 100% coverage, then the release zip.
+- A CI build: lint, the PHP and script tests with 100% coverage, then the release zip.
 - This documentation.
 
 Before 1.0:
 
 - **An accessibility check** of the form (axe, WCAG 2.2 AA) on the cart and checkout, on phone and desktop.
 - **The Turnstile widget's space:** with Cloudflare's test keys it leaves an empty gap in the form; check it with real keys.
-- **A link from the mini cart** to the form.
 - **GA4:** `restore_cart`, and tagging the email's link so purchases from it can be attributed ([analytics](docs/ANALYTICS.md)).
 - **Generic test scripts** ([development](docs/DEVELOPMENT.md#the-current-scripts-and-their-assumptions)) and **a neutral name and prefix**.

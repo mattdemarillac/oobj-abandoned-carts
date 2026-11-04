@@ -72,10 +72,10 @@ A bot check is an adapter: a PHP class for the server and a script for the brows
 | Method | |
 |---|---|
 | `start( element )` | Shows the check in the element from `markup()`. Called when the shopper starts on the form (focus on the email field); load the provider's script here, not before. |
-| `token()` | The answer to send, or `''`. Sent as the REST parameter `bot_check`. |
+| `token()` | The answer to send, or `''`, or a promise of it (for a check that may still be working when the shopper sends). Sent as the REST parameter `bot_check`. |
 | `reset()` | After each try, so the next one gets a fresh answer. |
 
-The built-in **Cloudflare Turnstile** (`inc/adapters/class-oobj-ac-turnstile.php`, `assets/adapters/turnstile.js`) is an example: it's ready when the options `cfturnstile_key` and `cfturnstile_secret` (from Simple Cloudflare Turnstile) are both set, and verifies with `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
+The built-in **Cloudflare Turnstile** (`inc/adapters/class-oobj-ac-turnstile.php`, `assets/adapters/turnstile.js`) is an example. It reads Simple Cloudflare Turnstile's options: it's ready when `cfturnstile_key` and `cfturnstile_secret` are both set and the shopper isn't exempt (`cfturnstile_whitelisted()`, or `cfturnstile_failover` with failsafe type `allow` while `cfturnstile_is_cloudflare_down()`); its markup carries `data-appearance`, `data-theme`, `data-size`, `data-language` and `data-refresh-timeout` from `cfturnstile_appearance`, `_theme`, `_size`, `_language` and `_refresh_timeout`; its `token()` waits up to 5 seconds for an answer; and it verifies with `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
 
 ## Browser events
 
@@ -98,6 +98,7 @@ document.addEventListener( 'oobj-ac:saved', () => { /* … */ } );
 | `woocommerce_checkout_order_processed` | Links the classic checkout's order to the cart. |
 | `render_block_woocommerce/cart` | Adds the "Email me my cart" form after the Cart block. |
 | `render_block_woocommerce/checkout` | Adds the collapsed form after the Checkout block. |
+| `render_block_woocommerce/mini-cart` | Loads the mini cart link's script and style, and adds its address and text after the Mini-Cart block. |
 | `template_redirect` | Restores an emailed cart on the cart page (`?saved-cart=`). |
 | `rest_api_init` | Registers the REST route. |
 | `wp_enqueue_scripts` | Loads the form's script and styles, the bot check's script and the GA4 adapter's, on the cart and checkout pages only. |
@@ -194,6 +195,8 @@ The cart page's form (after the Cart block):
 </section>
 ```
 
+The mini cart's link: after the Mini-Cart block, `<span class="oobj-ac-mini-cart-link" hidden data-url="…/cart/#save-cart" data-text="Email me this cart"></span>`; `assets/mini-cart.js` adds `<a class="oobj-ac-mini-cart" href="…">Email me this cart</a>` to the drawer's `.wc-block-mini-cart__footer`. On the cart page, `#save-cart` puts the cursor in the email field.
+
 Under the checkout, the same form inside `<details class="oobj-ac-save oobj-ac-save--collapsed" id="save-cart"><summary>…</summary>…</details>`. The status line gets `is-error` for errors. Link to `#save-cart` to send shoppers to the form.
 
 The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted`, `--contrast`, `--base` and `--wp--preset--font-size--large` when the theme defines them, and `--oobj-ac-field-border` (default `#8a8a8a`) for the email field's border.
@@ -214,6 +217,7 @@ The styles (`assets/save-cart.css`) use `--wp--preset--color--surface`, `--muted
 | `inc/interface-oobj-ac-bot-check.php` | The bot check interface. |
 | `inc/adapters/` | Optional integrations: `class-oobj-ac-turnstile.php` (Cloudflare Turnstile as the bot check) and `class-oobj-ac-ga4.php` (Google Analytics 4). |
 | `inc/class-oobj-ac-updates.php`, `inc/class-oobj-ac-github-releases.php` | Updates from the GitHub releases. |
+| `inc/class-oobj-ac-mini-cart.php`, `assets/mini-cart.js`, `assets/mini-cart.css` | The mini cart's **Email me this cart** link. |
 | `assets/save-cart.js`, `assets/save-cart.css` | The form's script and styles. |
 | `assets/adapters/` | The adapters' scripts: `turnstile.js` (`window.oobjAcBotCheck`) and `ga4.js` (`save_cart` on `oobj-ac:saved`). |
 | `uninstall.php` | Drops the tables when the plugin is deleted. |

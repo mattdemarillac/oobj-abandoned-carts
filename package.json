@@ -1,0 +1,34 @@
+{
+	"name": "oobj-abandoned-carts",
+	"private": true,
+	"description": "Saved Carts for WooCommerce: the front-end scripts' tests.",
+	"license": "UNLICENSED",
+	"scripts": {
+		"test": "jest --coverage"
+	},
+	"devDependencies": {
+		"jest": "30.5.2",
+		"jest-environment-jsdom": "30.5.2"
+	},
+	"jest": {
+		"testEnvironment": "jsdom",
+		"testEnvironmentOptions": {
+			"url": "https://shop.example/cart/"
+		},
+		"testMatch": [
+			"<rootDir>/tests/js/**/*.test.js"
+		],
+		"collectCoverageFrom": [
+			"assets/**/*.js"
+		],
+		"coverageDirectory": "tests/coverage/js",
+		"coverageThreshold": {
+			"global": {
+				"branches": 100,
+				"functions": 100,
+				"lines": 100,
+				"statements": 100
+			}
+		}
+	}
+}

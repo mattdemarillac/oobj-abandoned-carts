@@ -1,0 +1,9 @@
+/* "Email me this cart" under the Mini-Cart drawer's buttons (assets/mini-cart.js). */
+.oobj-ac-mini-cart {
+	display: block;
+	margin-top: 12px;
+	color: inherit;
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
+	text-align: center;
+	text-decoration: underline;
+}

@@ -18,8 +18,10 @@ class TurnstileTest extends OOBJ_AC_TestCase {
 	private $sent = null;
 
 	public function tear_down() {
-		delete_option( 'cfturnstile_key' );
-		delete_option( 'cfturnstile_secret' );
+		foreach ( array( 'key', 'secret', 'appearance', 'theme', 'size', 'language', 'refresh_timeout', 'failover', 'failsafe_type' ) as $name ) {
+			delete_option( "cfturnstile_$name" );
+		}
+		$GLOBALS['oobj_ac_test_turnstile'] = array();
 		remove_all_filters( 'pre_http_request' );
 		parent::tear_down();
 	}
@@ -51,10 +53,45 @@ class TurnstileTest extends OOBJ_AC_TestCase {
 		$this->assertTrue( $turnstile->ready() );
 	}
 
-	public function test_markup_carries_the_site_key_escaped() {
-		update_option( 'cfturnstile_key', 'key"><script>' );
+	public function test_markup_carries_the_plugins_widget_settings() {
+		update_option( 'cfturnstile_key', 'site-key' );
+		update_option( 'cfturnstile_appearance', 'interaction-only' );
+		update_option( 'cfturnstile_theme', 'light' );
+		update_option( 'cfturnstile_size', 'compact' );
+		update_option( 'cfturnstile_language', 'en' );
+		update_option( 'cfturnstile_refresh_timeout', 'manual' );
 
-		$this->assertSame( '<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="key&quot;&gt;&lt;script&gt;"></div>', ( new OOBJ_AC_Turnstile() )->markup() );
+		$this->assertSame(
+			'<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="site-key" data-appearance="interaction-only" data-theme="light" data-size="compact" data-language="en" data-refresh-timeout="manual"></div>',
+			( new OOBJ_AC_Turnstile() )->markup()
+		);
+	}
+
+	public function test_markup_defaults_and_escaping() {
+		update_option( 'cfturnstile_key', 'key"x' );
+
+		$this->assertSame(
+			'<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="key&quot;x" data-appearance="always" data-theme="auto" data-size="normal" data-language="auto" data-refresh-timeout="auto"></div>',
+			( new OOBJ_AC_Turnstile() )->markup(),
+			'Turnstile\'s defaults for settings left empty'
+		);
+	}
+
+	public function test_no_check_for_whitelisted_shoppers_or_while_cloudflare_is_down() {
+		update_option( 'cfturnstile_key', 'site-key' );
+		update_option( 'cfturnstile_secret', 'secret' );
+		$turnstile = new OOBJ_AC_Turnstile();
+		$this->assertTrue( $turnstile->ready() );
+
+		$GLOBALS['oobj_ac_test_turnstile'] = array( 'whitelisted' => true );
+		$this->assertFalse( $turnstile->ready(), 'On the plugin\'s whitelist (e.g. signed in)' );
+
+		$GLOBALS['oobj_ac_test_turnstile'] = array( 'down' => true );
+		$this->assertTrue( $turnstile->ready(), 'The failsafe is off' );
+		update_option( 'cfturnstile_failover', 'on' );
+		$this->assertFalse( $turnstile->ready(), 'Failsafe on, allowing forms through' );
+		update_option( 'cfturnstile_failsafe_type', 'recaptcha' );
+		$this->assertTrue( $turnstile->ready(), 'A failsafe that doesn\'t just allow' );
 	}
 
 	public function test_enqueues_its_script() {

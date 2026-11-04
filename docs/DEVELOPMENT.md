@@ -13,6 +13,7 @@ Requires PHP 8.1+ and Composer. The tests need a WordPress install with WooComme
 | Command | |
 |---|---|
 | `composer test` | PHPUnit (the WordPress test suite, with WooCommerce). Arguments go to PHPUnit, e.g. `composer test -- --filter SavedCarts`. |
+| `composer test:js` (or `npm test`) | Jest tests of the scripts in `assets/` (`tests/js/`), in jsdom, with coverage; fails below 100% (branches, functions, lines, statements). Run `npm install` first. |
 | `composer test:coverage` | PHPUnit with line coverage (PCOV): a summary per class, an HTML report in `tests/coverage/html/`, and a failure below 100% of lines, listing the lines not covered. |
 | `composer lint` | PHP_CodeSniffer with the WordPress Coding Standards (`phpcs.xml.dist`). |
 | `composer lint:fix` | Fixes what PHP_CodeSniffer can. |
@@ -42,15 +43,16 @@ Requires PHP 8.1+ and Composer. The tests need a WordPress install with WooComme
 - **Optional integrations with other services are adapters:** the class in `inc/adapters/`, its script in `assets/adapters/`. The core never names a service: it works through an interface (`OOBJ_AC_Bot_Check`) or an event (`oobj-ac:saved`), and every adapter can be turned off with a filter. Currently: `OOBJ_AC_Turnstile` (bot check) and `OOBJ_AC_GA4` (analytics).
 - Modules implement `OOBJ_AC_Module` (`register()` adds their hooks). `OOBJ_AC_Plugin::boot()` creates them and wires their dependencies. `oobj_abandoned_carts( OOBJ_AC_Store::class )` returns a module.
 - `declare( strict_types=1 );` in every PHP file.
-- Every change comes with tests, and coverage stays at 100% (once it gets there: see the README's Status).
+- Every change comes with tests, and coverage stays at 100%: PHPUnit for the PHP, Jest for the scripts. CI won't release otherwise.
 
 ## CI and releases
 
 `.github/workflows/release.yml` runs on every push to `main`:
 
 1. **lint:** `composer lint`.
-2. **test-php:** PHPUnit with coverage against WordPress and WooCommerce (installed by `tests/bin/ci-wordpress.sh`, versions in that script) and a MariaDB service, then the 100% line coverage check.
-3. **release**, only when both pass: checks that the header's `Version` and `OOBJ_ABANDONED_CARTS_VERSION` match, builds `oobj-abandoned-carts-v<Version>.zip` (the plugin folder with `assets/`, `inc/`, the plugin file, `uninstall.php` and `LICENSE`), and publishes it as release `v<Version>`, marked latest.
+2. **test-js:** `npm test`, the scripts' Jest tests, failing below 100% coverage.
+3. **test-php:** PHPUnit with coverage against WordPress and WooCommerce (installed by `tests/bin/ci-wordpress.sh`, versions in that script) and a MariaDB service, then the 100% line coverage check.
+4. **release**, only when all three pass: checks that the header's `Version` and `OOBJ_ABANDONED_CARTS_VERSION` match, builds `oobj-abandoned-carts-v<Version>.zip` (the plugin folder with `assets/`, `inc/`, the plugin file, `uninstall.php` and `LICENSE`), and publishes it as release `v<Version>`, marked latest.
 
 Until `Version` changes, each push to `main` moves the `v<Version>` tag to the new commit and replaces the release's zip. **To release a new version, bump both `Version` in the plugin header and `OOBJ_ABANDONED_CARTS_VERSION`.**
 

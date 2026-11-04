@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Saved Carts
  * Description:       Keeps every cart shoppers fill, so you can see the ones that didn't become an order (WooCommerce → Saved carts), and lets shoppers email themselves their cart to come back to on any device.
- * Version:           0.3.2
+ * Version:           0.4.0
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -20,7 +20,7 @@ declare( strict_types=1 );
 defined( 'ABSPATH' ) || exit;
 
 define( 'OOBJ_ABANDONED_CARTS_FILE', __FILE__ );
-define( 'OOBJ_ABANDONED_CARTS_VERSION', '0.3.2' );
+define( 'OOBJ_ABANDONED_CARTS_VERSION', '0.4.0' );
 
 /*
  * Classes: OOBJ_AC_Foo_Bar lives in inc/class-oobj-ac-foo-bar.php (interfaces in interface-oobj-ac-*.php). Optional

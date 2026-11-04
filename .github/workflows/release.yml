@@ -9,8 +9,8 @@ name: Build and Release
 # The archive holds an oobj-abandoned-carts/ folder for wp-content/plugins/, with only the files the site runs and
 # the licence: tests, tooling and docs stay out.
 #
-# Nothing is released unless lint and the tests pass: PHPUnit with WordPress, WooCommerce and a MariaDB service,
-# and 100% line coverage.
+# Nothing is released unless lint and the tests pass, each with 100% coverage: PHPUnit (with WordPress, WooCommerce
+# and a MariaDB service) for the PHP, Jest for the scripts in assets/.
 
 on:
   push:
@@ -28,6 +28,7 @@ permissions:
 
 env:
   PHP_VERSION: "8.5"
+  NODE_VERSION: "26"
   SLUG: oobj-abandoned-carts
 
 jobs:
@@ -51,6 +52,26 @@ jobs:
 
       - name: Lint PHP
         run: composer lint
+
+  test-js:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Script tests (100% coverage)
+        run: npm test
 
   test-php:
     runs-on: ubuntu-latest
@@ -109,7 +130,7 @@ jobs:
         run: php tests/bin/coverage-check.php tests/coverage/clover.xml
 
   release:
-    needs: [lint, test-php]
+    needs: [lint, test-js, test-php]
     runs-on: ubuntu-latest
 
     steps:

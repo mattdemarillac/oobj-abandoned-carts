@@ -378,7 +378,7 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 		$this->assertStringContainsString( 'data-nonce="' . wp_create_nonce( 'wp_rest' ) . '"', $cart, 'Keeps a signed-in shopper signed in' );
 		$this->assertStringContainsString( "'X-WP-Nonce': form.dataset.nonce", (string) file_get_contents( dirname( OOBJ_ABANDONED_CARTS_FILE ) . '/assets/save-cart.js' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A plugin file.
 		$this->assertStringContainsString( 'name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true"', $cart );
-		$this->assertStringContainsString( '<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="site-key"></div>', $cart );
+		$this->assertStringContainsString( '<div class="oobj-ac-save__bot-check" data-oobj-ac-bot-check="turnstile" data-sitekey="site-key" ', $cart );
 		$this->assertStringContainsString( 'role="status" aria-live="polite"', $cart );
 
 		$checkout = $module->checkout_form( '<div>checkout</div>' );

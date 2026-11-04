@@ -46,6 +46,7 @@ require __DIR__ . '/class-oobj-ac-testcase.php';
 require __DIR__ . '/class-oobj-ac-test-stopped.php';
 require __DIR__ . '/class-oobj-ac-test-saved-carts.php';
 require __DIR__ . '/class-oobj-ac-test-bot-check.php';
+require __DIR__ . '/simple-cloudflare-turnstile-stubs.php';
 
 if ( $oobj_pcov ) {
 	\pcov\stop();
