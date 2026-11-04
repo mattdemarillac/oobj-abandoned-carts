@@ -35,9 +35,14 @@ class OOBJ_AC_Plugin {
 	 * days), so the list isn't empty until shoppers come back.
 	 */
 	public static function activate(): void {
+		// WordPress doesn't activate it without WooCommerce (Requires Plugins); the tests load WooCommerce.
+		// phpcs:disable Squiz.Commenting.InlineComment.InvalidEndChar -- PHPUnit needs the marker exactly.
+		// @codeCoverageIgnoreStart
 		if ( ! function_exists( 'WC' ) ) {
 			return;
 		}
+		// @codeCoverageIgnoreEnd
+		// phpcs:enable Squiz.Commenting.InlineComment.InvalidEndChar
 		$store = new OOBJ_AC_Store();
 		$store->install();
 		( new OOBJ_AC_Backfill( $store ) )->run();

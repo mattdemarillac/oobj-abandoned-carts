@@ -9,9 +9,14 @@ declare( strict_types=1 );
 
 defined( 'ABSPATH' ) || exit;
 
+// Loaded already wherever WordPress's admin is (the tests included).
+// phpcs:disable Squiz.Commenting.InlineComment.InvalidEndChar -- PHPUnit needs the marker exactly.
+// @codeCoverageIgnoreStart
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
+// @codeCoverageIgnoreEnd
+// phpcs:enable Squiz.Commenting.InlineComment.InvalidEndChar
 
 /**
  * The abandoned carts on the admin page, a page of 50 at a time.

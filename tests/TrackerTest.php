@@ -139,4 +139,47 @@ class TrackerTest extends OOBJ_AC_TestCase {
 
 		$this->assertSame( '2020-01-01 00:00:00', $this->store()->get( $id )['updated_at'] );
 	}
+
+	public function test_nothing_without_a_session() {
+		$this->add_to_cart( $this->create_product() );
+		$session      = WC()->session;
+		WC()->session = null;
+		$tracker      = oobj_abandoned_carts( OOBJ_AC_Tracker::class );
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i', $this->store()->table() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		$tracker->save_cart();
+
+		WC()->session = $session;
+		$this->assertSame( array(), $this->all_carts() );
+	}
+
+	public function test_an_order_is_linked_only_to_a_recorded_cart() {
+		$tracker = oobj_abandoned_carts( OOBJ_AC_Tracker::class );
+		$tracker->link_order( 'not an order' );
+		$tracker->link_order( $this->create_order() );
+
+		$this->assertSame( array(), $this->all_carts(), 'No cart to link it to' );
+	}
+
+	public function test_a_signed_in_shoppers_cart_has_their_account() {
+		$user = self::factory()->user->create();
+		wp_set_current_user( $user );
+
+		$this->add_to_cart( $this->create_product() );
+
+		$this->assertSame( $user, (int) $this->only_cart()['user_id'] );
+	}
+
+	public function test_the_orders_customer_account_is_recorded() {
+		$this->add_to_cart( $this->create_product() );
+		$user  = self::factory()->user->create();
+		$order = $this->create_order();
+		$order->set_customer_id( $user );
+		$order->save();
+
+		oobj_abandoned_carts( OOBJ_AC_Tracker::class )->link_order( $order );
+
+		$this->assertSame( $user, (int) $this->only_cart()['user_id'] );
+	}
 }

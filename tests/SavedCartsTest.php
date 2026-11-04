@@ -7,20 +7,6 @@
 
 declare( strict_types=1 );
 
-/**
- * Thrown instead of exit after a redirect.
- */
-class OOBJ_AC_Test_Stopped extends Exception {}
-
-/**
- * The module, stopping with an exception instead of exit.
- */
-class OOBJ_AC_Test_Saved_Carts extends OOBJ_AC_Saved_Carts {
-	protected function stop(): void {
-		throw new OOBJ_AC_Test_Stopped();
-	}
-}
-
 class SavedCartsTest extends OOBJ_AC_TestCase {
 
 	/**
@@ -268,7 +254,7 @@ class SavedCartsTest extends OOBJ_AC_TestCase {
 
 	private function restore( string $token ): void {
 		$this->go_to( add_query_arg( OOBJ_AC_Saved_Carts::QUERY_VAR, $token, get_permalink( wc_get_page_id( 'cart' ) ) ) );
-		$GLOBALS['post'] = get_post( wc_get_page_id( 'cart' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- As the page's request sets it.
+		$GLOBALS['post']                        = get_post( wc_get_page_id( 'cart' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- As the page's request sets it.
 		$_GET[ OOBJ_AC_Saved_Carts::QUERY_VAR ] = $token;
 		try {
 			$this->module()->restore();

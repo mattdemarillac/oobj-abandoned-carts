@@ -297,7 +297,7 @@ class OOBJ_AC_Store {
 		if ( ! $cart_ids ) {
 			return array();
 		}
-		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare( 'SELECT cart_id, MAX(created_at) AS saved_at, MAX(restored_at) AS restored_at FROM %i WHERE cart_id IN (' . implode( ',', array_fill( 0, count( $cart_ids ), '%d' ) ) . ') GROUP BY cart_id', array_merge( array( $this->saved_table() ), $cart_ids ) ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- One %d per ID.
 			ARRAY_A
 		);

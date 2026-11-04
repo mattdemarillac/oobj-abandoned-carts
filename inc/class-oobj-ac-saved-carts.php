@@ -146,10 +146,18 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 		$saved = $this->store->find_saved( $token );
 		if ( ! $saved ) {
 			wc_add_notice( __( 'That saved cart link has expired.', 'oobj-abandoned-carts' ), 'notice' );
-			$this->redirect();
-			return;
+		} else {
+			$this->put_back( $saved );
 		}
+		$this->redirect();
+	}
 
+	/**
+	 * Adds an emailed cart's items to the cart, once per session, and says what couldn't be added.
+	 *
+	 * @param array $saved The emailed cart (OOBJ_AC_Store::find_saved()).
+	 */
+	private function put_back( array $saved ): void {
 		$restored = (array) WC()->session->get( self::RESTORED_KEY );
 		if ( ! in_array( $saved['id'], $restored, true ) ) {
 			$skipped = array();
@@ -166,7 +174,6 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 				wc_add_notice( sprintf( __( 'No longer available: %s.', 'oobj-abandoned-carts' ), implode( ', ', array_filter( $skipped ) ) ), 'notice' );
 			}
 		}
-		$this->redirect();
 	}
 
 	/**
@@ -348,7 +355,7 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 				),
 			)
 		);
-		$data = json_decode( (string) wp_remote_retrieve_body( $answer ), true );
+		$data   = json_decode( (string) wp_remote_retrieve_body( $answer ), true );
 		return is_array( $data ) && ! empty( $data['success'] );
 	}
 

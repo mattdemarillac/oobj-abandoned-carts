@@ -43,6 +43,8 @@ tests_add_filter(
 
 require $oobj_tests_dir . '/includes/bootstrap.php';
 require __DIR__ . '/class-oobj-ac-testcase.php';
+require __DIR__ . '/class-oobj-ac-test-stopped.php';
+require __DIR__ . '/class-oobj-ac-test-saved-carts.php';
 
 if ( $oobj_pcov ) {
 	\pcov\stop();
