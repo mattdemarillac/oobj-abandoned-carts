@@ -1,0 +1,86 @@
+/* "Email me my cart" under the cart, and collapsed under the checkout. Colours and type from the theme. */
+.oobj-ac-save {
+	max-width: 640px;
+	margin: 40px auto 0;
+	padding: 24px;
+	border-radius: 6px;
+	background: var(--wp--preset--color--surface, #f6f6f8);
+}
+
+.oobj-ac-save__title {
+	margin: 0 0 6px;
+	font-size: var(--wp--preset--font-size--large, 1.25rem);
+}
+
+.oobj-ac-save__text {
+	margin: 0 0 16px;
+	color: var(--wp--preset--color--muted, #717171);
+}
+
+.oobj-ac-save__label {
+	display: block;
+	margin-bottom: 6px;
+	font-weight: 600;
+}
+
+.oobj-ac-save__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.oobj-ac-save__email {
+	flex: 1 1 220px;
+	min-height: 44px;
+	padding: 0 12px;
+	border: 1px solid var(--oob-field-border, #8a8a8a);
+	border-radius: 4px;
+	background: var(--wp--preset--color--base, #fff);
+	font: inherit;
+}
+
+.oobj-ac-save__email:focus {
+	border-color: var(--wp--preset--color--contrast, #222);
+	outline: 2px solid var(--wp--preset--color--contrast, #222);
+	outline-offset: 0;
+}
+
+.oobj-ac-save__button {
+	min-height: 44px;
+	cursor: pointer;
+}
+
+.oobj-ac-save__button:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
+/* Off screen, not display: none, which some bots skip. */
+.oobj-ac-save__trap {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+}
+
+.oobj-ac-save__turnstile:not(:empty) {
+	margin-top: 12px;
+}
+
+.oobj-ac-save__status {
+	min-height: 1.5em;
+	margin: 10px 0 0;
+}
+
+.oobj-ac-save__status.is-error {
+	color: #b42318;
+}
+
+.oobj-ac-save--collapsed summary {
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.oobj-ac-save--collapsed[open] summary {
+	margin-bottom: 12px;
+}

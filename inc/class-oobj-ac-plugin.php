@@ -27,6 +27,7 @@ class OOBJ_AC_Plugin {
 		$this->add( new OOBJ_AC_Tracker( $store ) );
 		$this->add( new OOBJ_AC_Cleanup( $store ) );
 		$this->add( new OOBJ_AC_Admin_Page( $store ) );
+		$this->add( new OOBJ_AC_Saved_Carts( $store ) );
 	}
 
 	/**

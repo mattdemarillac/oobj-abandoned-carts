@@ -38,8 +38,13 @@ class OOBJ_AC_Cleanup implements OOBJ_AC_Module {
 		return max( 1, (int) apply_filters( 'oobj_ac_retention_days', 30 ) );
 	}
 
+	/**
+	 * Deletes carts past the retention period and emailed carts whose links have expired.
+	 *
+	 * @return int How many were deleted.
+	 */
 	public function prune(): int {
-		return $this->store->prune( self::retention_days() );
+		return $this->store->prune( self::retention_days() ) + $this->store->prune_saved();
 	}
 
 	public function schedule(): void {
