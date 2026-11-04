@@ -237,7 +237,8 @@ class OOBJ_AC_Saved_Carts implements OOBJ_AC_Module {
 			<h2 class="oobj-ac-save__title" id="oobj-ac-save-title"><?php esc_html_e( 'Not ready to check out?', 'oobj-abandoned-carts' ); ?></h2>
 		<?php endif; ?>
 			<p class="oobj-ac-save__text"><?php esc_html_e( 'Email yourself this cart and pick it up on any device. We\'ll only use your email to send it.', 'oobj-abandoned-carts' ); ?></p>
-			<form class="oobj-ac-save__form" data-url="<?php echo esc_url( rest_url( self::ROUTE_NAMESPACE . self::ROUTE ) ); ?>" novalidate>
+			<?php /* The nonce keeps a signed-in shopper signed in for the REST request, so their cart is found. The cart and checkout pages aren't cached. */ ?>
+			<form class="oobj-ac-save__form" data-url="<?php echo esc_url( rest_url( self::ROUTE_NAMESPACE . self::ROUTE ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" novalidate>
 				<label class="oobj-ac-save__label" for="oobj-ac-email"><?php esc_html_e( 'Email', 'oobj-abandoned-carts' ); ?></label>
 				<div class="oobj-ac-save__row">
 					<input class="oobj-ac-save__email" id="oobj-ac-email" name="email" type="email" autocomplete="email" required />

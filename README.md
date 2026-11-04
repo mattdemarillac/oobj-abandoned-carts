@@ -9,7 +9,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.3.1).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.3.2).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 

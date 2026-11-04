@@ -43,7 +43,8 @@
 				.fetch( form.dataset.url, {
 					method: 'POST',
 					credentials: 'same-origin',
-					headers: { 'Content-Type': 'application/json' },
+					// Without the nonce, WordPress treats a signed-in shopper as signed out, and their cart isn't found.
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': form.dataset.nonce || '' },
 					body: JSON.stringify( {
 						email: email.value,
 						website: trap ? trap.value : '',

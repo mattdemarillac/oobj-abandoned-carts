@@ -108,7 +108,7 @@ document.addEventListener( 'oobj-ac:saved', () => { /* … */ } );
 
 ### `POST /wp-json/oobj-ac/v1/saved-carts`
 
-Emails the shopper's current cart to them. Public (no authentication): it works on the cart in the request's WooCommerce session cookie.
+Emails the shopper's current cart to them. Public (no authentication needed): it works on the cart in the request's WooCommerce session. Send WordPress's REST nonce in `X-WP-Nonce` (the form has it in `data-nonce`): without it WordPress treats a signed-in shopper as signed out, and their cart isn't found.
 
 | Parameter | Type | |
 |---|---|---|
@@ -181,7 +181,7 @@ The cart page's form (after the Cart block):
 <section class="oobj-ac-save" id="save-cart" aria-labelledby="oobj-ac-save-title">
 	<h2 class="oobj-ac-save__title" id="oobj-ac-save-title">Not ready to check out?</h2>
 	<p class="oobj-ac-save__text">Email yourself this cart and pick it up on any device. …</p>
-	<form class="oobj-ac-save__form" data-url="/wp-json/oobj-ac/v1/saved-carts" novalidate>
+	<form class="oobj-ac-save__form" data-url="/wp-json/oobj-ac/v1/saved-carts" data-nonce="…" novalidate>
 		<label class="oobj-ac-save__label" for="oobj-ac-email">Email</label>
 		<div class="oobj-ac-save__row">
 			<input class="oobj-ac-save__email" id="oobj-ac-email" name="email" type="email" autocomplete="email" required />
