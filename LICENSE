@@ -1,0 +1,41 @@
+Abandoned Carts for WooCommerce
+Copyright (c) 2026 Matthew de Marillac. All rights reserved.
+
+Licence: use and modification permitted; redistribution not permitted.
+
+1. Permission
+
+   You may use this software, and copy and modify it, to run it on websites you operate or
+   operate for others, and to make changes to it for those websites.
+
+2. No redistribution
+
+   You may not distribute, publish, sell, sublicense, rent or otherwise make this software,
+   or any modified version or substantial part of it, available to anyone else, whether
+   free or for payment, except:
+
+   a. installing it on a website you operate or operate for someone else, so long as the
+      software itself isn't offered for download or transfer from that website; and
+   b. sharing it privately with people who work on those websites for you, for that work.
+
+   "Distribute" includes publishing it in a public repository, a plugin directory or a
+   marketplace.
+
+3. Modifications
+
+   Modified versions are covered by this licence. Keep this licence and the copyright
+   notice in every copy, modified or not.
+
+4. Other software
+
+   This licence covers only this software. WordPress, WooCommerce and the other software it
+   works with, including the packages in composer.json, have their own licences, which
+   still apply to them.
+
+5. No warranty
+
+   The software is provided "as is", without warranty of any kind, express or implied,
+   including fitness for a particular purpose. The copyright holder is not liable for any
+   claim, damages or other liability arising from the software or its use.
+
+For any use this licence doesn't permit, ask the copyright holder.

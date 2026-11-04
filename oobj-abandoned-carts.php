@@ -7,7 +7,8 @@
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
  * Author:            Out Of Body Jewellery
- * License:           Proprietary
+ * License:           Use and modification permitted, no redistribution (see LICENSE)
+ * License URI:       LICENSE
  * Text Domain:       oobj-abandoned-carts
  *
  * @package oobj-abandoned-carts

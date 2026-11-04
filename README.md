@@ -18,6 +18,7 @@ WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-
 - [Configuration](#configuration)
 - [Data and privacy](#data-and-privacy)
 - [Uninstalling](#uninstalling)
+- [Licence](#licence)
 - [Status](#status)
 - More: [reference](docs/REFERENCE.md) (hooks, REST route, tables, markup) · [analytics](docs/ANALYTICS.md) (GA4) · [development](docs/DEVELOPMENT.md) (tests, coverage, lint)
 
@@ -121,6 +122,10 @@ Also:
 
 **Deactivating** stops recording and unschedules the clean-up; the data stays. **Deleting** the plugin from **Plugins** drops both tables and deletes its option.
 
+## Licence
+
+Use and modification are permitted; redistribution isn't. See [LICENSE](LICENSE). WordPress, WooCommerce and the Composer packages keep their own licences.
+
 ## Status
 
 Done:
@@ -139,4 +144,4 @@ Before 1.0:
 - **The Turnstile widget's space:** with Cloudflare's test keys it leaves an empty gap in the form; check it with real keys.
 - **A link from the mini cart** to the form.
 - **GA4:** `restore_cart`, and tagging the email's link so purchases from it can be attributed ([analytics](docs/ANALYTICS.md)).
-- **Generic test scripts** ([development](docs/DEVELOPMENT.md#the-current-scripts-and-their-assumptions)), **a neutral name and prefix**, and the licence: the header says "Proprietary". A public release should be GPL-2.0-or-later, with a `LICENSE` file.
+- **Generic test scripts** ([development](docs/DEVELOPMENT.md#the-current-scripts-and-their-assumptions)) and **a neutral name and prefix**.
