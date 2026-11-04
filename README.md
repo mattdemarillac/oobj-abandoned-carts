@@ -9,7 +9,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.4.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.4.1).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 
@@ -75,7 +75,7 @@ What the shopper sees:
 
 - **Cart page:** under the cart, "Not ready to check out?" with an email field and an **Email me my cart** button. It shows only when the cart has something in it.
 - **Checkout:** the same form under the checkout, collapsed behind "Not ready to buy? Email yourself this cart", so it isn't in the way of paying.
-- **Mini cart:** WooCommerce's Mini-Cart drawer gets an **Email me this cart** link under its buttons, to the form on the cart page with the cursor in the email field. Pages cached before the plugin was installed show it once they're rebuilt; updating the plugin through WordPress normally purges the cache.
+- **Mini cart:** WooCommerce's Mini-Cart drawer gets an **Email me this cart** button (a light pill with an envelope) under its buttons, linking to the form on the cart page with the cursor in the email field. Pages cached before the plugin was installed show it once they're rebuilt; updating the plugin through WordPress normally purges the cache.
 - **The email** ("Your saved cart at *store name*", in WooCommerce's email template): each item with its photo, name, quantity and price, and a **Back to my cart** button.
 - **The link** works for 30 days (the retention period), on any device. It adds every item that's still for sale to the cart the shopper has open, then shows the cart with "Your saved cart is back." Items that are out of stock or gone are skipped with "No longer available: *names*." Opening the link twice in one session doesn't add the items twice. An expired or unknown link says "That saved cart link has expired."
 
