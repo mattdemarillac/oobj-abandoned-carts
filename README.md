@@ -1,5 +1,7 @@
 # Saved Carts for WooCommerce
 
+[![Build and Release](https://github.com/mattdemarillac/oobj-abandoned-carts/actions/workflows/release.yml/badge.svg)](https://github.com/mattdemarillac/oobj-abandoned-carts/actions/workflows/release.yml)
+
 Two things for a WooCommerce store:
 
 1. **A list of unfinished carts** under **WooCommerce → Saved carts**: the carts shoppers filled that didn't become a completed order, with who they were (once checkout knows), what was in the cart, how far they got, and whether they emailed the cart to themselves.
@@ -7,7 +9,7 @@ Two things for a WooCommerce store:
 
 WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-> **Status: pre-release (0.3.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
+> **Status: pre-release (0.3.1).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
 ## Contents
 
