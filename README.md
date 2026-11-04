@@ -1,20 +1,142 @@
-# OOBJ Abandoned Carts
+# Abandoned Carts for WooCommerce
 
-WooCommerce → **Abandoned carts**: the carts shoppers filled in the last week (or the last 24 hours, 3, 14 or 30 days) that didn't become a completed order.
+Two things for a WooCommerce store:
 
-WooCommerce deletes cart sessions after 2 days (a week for logged-in customers), so the plugin keeps its own record in `{prefix}oobj_ac_carts`. It saves each cart whenever WooCommerce saves it, together with the shopper's name and email once checkout has them and the order checkout creates. On activation it imports the carts still in WooCommerce's sessions.
+1. **A list of abandoned carts** under **WooCommerce → Abandoned carts**: the carts shoppers filled that didn't become a completed order, with who they were (once checkout knows), what was in the cart, how far they got, and whether they emailed the cart to themselves.
+2. **"Email me my cart"** for shoppers: under the cart (and, collapsed, under the checkout) a shopper enters their email address and gets their cart by email, with a link that puts it back on any device.
 
-- **Completed** (not listed): the order is paid, on hold or refunded. Filter: `oobj_ac_completed_statuses`.
-- **Listed**, with how far the shopper got: the cart only, reached checkout, order placed but not paid, payment failed, or order cancelled.
-- A cart the shopper empties is forgotten. Carts are deleted 30 days after their last activity, daily via Action Scheduler. Filter: `oobj_ac_retention_days`.
-- Deleting the plugin drops the table.
+WooCommerce deletes cart sessions after 2 days for guests and 7 days for signed-in customers, so the plugin keeps its own record of every cart as it changes.
 
-## Development
+> **Status: pre-release (0.1.0).** It runs on a development site, not yet in production. See [Status](#status) for what's left before 1.0.
 
-```sh
-composer install
-composer test   # PHPUnit in the local stack's litespeed container (database oobj_abandoned_carts_tests)
-composer lint   # phpcs (WordPress Coding Standards)
-```
+## Contents
 
-The working copy is `wp-content/plugins/oobj-abandoned-carts/` in the local site (`~/Sites/oobj`). This repo is a copy of it.
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [The abandoned carts list](#the-abandoned-carts-list)
+- [Email me my cart](#email-me-my-cart)
+- [Configuration](#configuration)
+- [Data and privacy](#data-and-privacy)
+- [Uninstalling](#uninstalling)
+- [Status](#status)
+- More: [reference](docs/REFERENCE.md) (hooks, REST route, tables, markup) · [analytics](docs/ANALYTICS.md) (GA4) · [development](docs/DEVELOPMENT.md) (tests, coverage, lint)
+
+## Requirements
+
+| | |
+|---|---|
+| WordPress | 6.6 or later |
+| PHP | 8.1 or later |
+| WooCommerce | Active (the plugin declares `Requires Plugins: woocommerce`). Works with the block cart and checkout, and records orders from the classic checkout too. |
+| Optional | [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/), for a bot check on "Email me my cart" ([Configuration](#configuration)). |
+
+## Installation
+
+1. Upload the plugin folder to `wp-content/plugins/` (or install the zip from **Plugins → Add New → Upload Plugin**).
+2. Activate it.
+
+On activation the plugin creates its two tables (see [Data and privacy](#data-and-privacy)) and imports the carts WooCommerce still has in its sessions (the last 2 to 7 days), so the list isn't empty on day one. The daily clean-up (Action Scheduler, part of WooCommerce) is scheduled on the next admin page load.
+
+After an update, the tables are upgraded on the next page load when their version changes. There's no separate migration to run.
+
+## The abandoned carts list
+
+**WooCommerce → Abandoned carts** (shop managers and administrators: the `manage_woocommerce` capability).
+
+- **Period:** the last 24 hours, 3, 7 (default), 14 or 30 days, by last activity. Totals for the period are at the top.
+- **Listed:** carts that didn't become a completed order. "Completed" means the order is paid, on hold or refunded ([filter](docs/REFERENCE.md#filters)).
+- **Columns:**
+
+| Column | Shows |
+|---|---|
+| Last activity | When the cart last changed (hover for the date and time). |
+| Customer | Name and email once checkout has them; a link to the customer's account if they were signed in. |
+| Items | What was in the cart, with quantities. |
+| Total | The cart's total, in its currency. |
+| Got as far as | **Cart only**, **Reached checkout**, **Order placed, not paid**, **Payment failed** or **Order cancelled (unpaid)**, with a link to the order when there is one. |
+| Emailed | Whether the shopper emailed the cart to themselves ("Yes, 2 days ago") and whether they came back from the email ("Came back 1 hour ago"). |
+| Started | When the cart was first filled. |
+
+How carts are recorded:
+
+- A cart is saved whenever WooCommerce saves it (at most every 10 minutes while nothing changes), with the shopper's name and email once checkout has them, and the order checkout creates.
+- A cart the shopper empties is forgotten, unless it already has an order (checkout empties the cart once the order is placed).
+- Signing out keeps the account's cart.
+- Carts are deleted 30 days after their last activity ([filter](docs/REFERENCE.md#filters)).
+
+## Email me my cart
+
+What the shopper sees:
+
+- **Cart page:** under the cart, "Not ready to check out?" with an email field and an **Email me my cart** button. It shows only when the cart has something in it.
+- **Checkout:** the same form under the checkout, collapsed behind "Not ready to buy? Email yourself this cart", so it isn't in the way of paying.
+- **The email** ("Your saved cart at *store name*", in WooCommerce's email template): each item with its photo, name, quantity and price, and a **Back to my cart** button.
+- **The link** works for 30 days (the retention period), on any device. It adds every item that's still for sale to the cart the shopper has open, then shows the cart with "Your saved cart is back." Items that are out of stock or gone are skipped with "No longer available: *names*." Opening the link twice in one session doesn't add the items twice. An expired or unknown link says "That saved cart link has expired."
+
+How it works:
+
+1. The form posts to the REST route `POST /wp-json/oobj-ac/v1/saved-carts` ([reference](docs/REFERENCE.md#rest-route)).
+2. The plugin saves a copy of the cart's items with a random token, and stores only a SHA-256 hash of the token: a copy of the table can't be used to open anyone's cart.
+3. The link is `/cart/?saved-cart=TOKEN`. On the cart page, before it renders, the plugin finds the saved cart by the token's hash, adds the items with WooCommerce's own `add_to_cart()`, and redirects to `/cart/` without the token. No JavaScript is involved. The cart page must not be served from a page cache (WooCommerce's cart never should be).
+4. The cart's record in the list gets the email address if it had none, and the **Emailed** column shows it.
+
+Against misuse (the form sends email from the store's domain):
+
+- the shopper's session must have a cart;
+- a hidden field that people don't see and bots fill in: a filled-in field gets a "sent" answer and nothing is sent;
+- **Cloudflare Turnstile** when Simple Cloudflare Turnstile has keys ([Configuration](#configuration));
+- at most **3 emails to an address a day** and **5 emails from one IP address an hour**.
+
+The address is used only to send that cart. It isn't added to any mailing list, and the form says so.
+
+## Configuration
+
+There's no settings page. Behaviour is changed with filters ([reference](docs/REFERENCE.md#filters)):
+
+| Filter | Default | Changes |
+|---|---|---|
+| `oobj_ac_retention_days` | `30` | How long carts are kept, and how long "Email me my cart" links work. |
+| `oobj_ac_completed_statuses` | Paid statuses, `on-hold`, `refunded` | Which order statuses count as a completed order (not listed). |
+
+**Turnstile:** install and set up [Simple Cloudflare Turnstile](https://wordpress.org/plugins/simple-cloudflare-turnstile/). When its site key and secret key are saved, "Email me my cart" shows the Turnstile widget (its script loads only once the shopper starts on the form) and the server checks each answer with Cloudflare. Without keys, the form works without it.
+
+**Look:** the form uses the theme's colours and type through WordPress's preset variables (`--wp--preset--color--*`), with plain fallbacks. Its markup and classes are in the [reference](docs/REFERENCE.md#markup).
+
+## Data and privacy
+
+The plugin stores personal data. Mention it in the store's privacy policy.
+
+| Table | What's in it | Kept |
+|---|---|---|
+| `{prefix}oobj_ac_carts` | One row per cart: WooCommerce's session key, the user ID when signed in, name and email (once checkout has them, or from "Email me my cart"), the items, count, total and currency, the order ID, and when it started, changed and reached checkout. | 30 days after the last activity |
+| `{prefix}oobj_ac_saved` | One row per emailed cart: the cart it came from, the email address, the items, a SHA-256 hash of the link's token, and when it was sent, when the link expires and when it was last used. | Until the link expires (30 days) |
+
+Also:
+
+- **IP addresses aren't stored.** The per-IP limit is a transient keyed by a hash of the IP that expires after an hour.
+- **Turnstile** (when set up) sends the shopper's IP address and the widget's answer to Cloudflare to check them.
+- The plugin's option is `oobj_ac_db_version`, its session keys are `oobj_ac` and `oobj_ac_restored`, and its Action Scheduler hook is `oobj_ac_prune` (group `oobj-abandoned-carts`).
+
+## Uninstalling
+
+**Deactivating** stops recording and unschedules the clean-up; the data stays. **Deleting** the plugin from **Plugins** drops both tables and deletes its option.
+
+## Status
+
+Done:
+
+- The abandoned carts list, with the **Emailed** column.
+- "Email me my cart" on the cart and checkout pages, the email, and the link back.
+- PHPUnit tests (41), run against WordPress and WooCommerce.
+- This documentation.
+
+Before 1.0:
+
+- **Test coverage to 100%.** At 653 of 678 lines: the rest is older code (activation, scheduling, a few tracker branches). `composer test:coverage` lists the lines.
+- **Updates from GitHub releases**, so new versions arrive through **Dashboard → Updates**.
+- **A CI build:** lint, the tests with 100% coverage, then a release zip.
+- **An accessibility check** of the form (axe, WCAG 2.2 AA) on the cart and checkout, on phone and desktop.
+- **The Turnstile widget's space:** with Cloudflare's test keys it leaves an empty gap in the form; check it with real keys.
+- **A link from the mini cart** to the form.
+- **GA4:** `restore_cart`, and tagging the email's link so purchases from it can be attributed ([analytics](docs/ANALYTICS.md)).
+- **Generic test scripts** ([development](docs/DEVELOPMENT.md#the-current-scripts-and-their-assumptions)), **a neutral name and prefix**, and the licence: the header says "Proprietary". A public release should be GPL-2.0-or-later, with a `LICENSE` file.
