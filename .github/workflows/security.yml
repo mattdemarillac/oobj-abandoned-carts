@@ -1,0 +1,95 @@
+# Security checks: Semgrep (PHP and JS security rules), CodeQL (GitHub's own analysis; not for PHP, which it doesn't
+# support) and known-vulnerable dependencies. Findings fail the run and, while the repo is public, show under
+# Security → Code scanning. GitHub's code scanning needs a public repo (or Advanced Security), so on a private one
+# the analysis still runs and fails on findings, but nothing is uploaded and CodeQL is skipped.
+name: Security
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays: new rules and new advisories, even without a push.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visibility:
+    name: Repo visibility
+    runs-on: ubuntu-latest
+    outputs:
+      public: ${{ steps.check.outputs.public }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "public=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.private | not')" >> "$GITHUB_OUTPUT"
+
+  semgrep:
+    name: Semgrep
+    needs: visibility
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    container:
+      image: semgrep/semgrep:1.182.1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # weak-crypto is left out: md5 here only makes cache keys and change fingerprints, never protects anything.
+      - name: Scan
+        run: >
+          semgrep scan --metrics=off --error
+          --config p/php --config p/phpcs-security-audit --config p/javascript
+          --exclude-rule php.lang.security.weak-crypto.weak-crypto
+          --exclude vendor --exclude node_modules --exclude tests --exclude tools
+          --sarif-output=semgrep.sarif --text
+
+      - name: Upload to code scanning
+        if: always() && needs.visibility.outputs.public == 'true' && hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    needs: visibility
+    if: needs.visibility.outputs.public == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ actions, javascript-typescript ]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: codeql-${{ matrix.language }}
+
+  dependencies:
+    name: Known-vulnerable dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+          coverage: none
+      - name: Composer audit
+        run: composer audit --locked
+      # What ships: dev tools (Jest, linters) aren't in the plugin; Dependabot keeps them updated.
+      - name: npm audit
+        run: npm audit --package-lock-only --omit=dev

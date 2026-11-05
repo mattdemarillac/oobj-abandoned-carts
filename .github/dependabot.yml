@@ -1,0 +1,26 @@
+# Dependabot: weekly update PRs for Composer, npm and the workflows' actions; security fixes come
+# as soon as an advisory is out.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-tools:
+        dependency-type: development
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-tools:
+        dependency-type: development
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
